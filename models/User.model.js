@@ -11,6 +11,7 @@ const userSchema = mongoose.Schema(
     highlights: { type: Array, require: false, default: [] },
     education: { type: Array, require: false, default: [] },
     businessDrivers: { type: Array, require: false, default: [] },
+    presentRole: { type: Object, default: {}, require: false },
   },
   { Timestamp: true }
 );
