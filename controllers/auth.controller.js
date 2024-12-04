@@ -2,14 +2,24 @@ const User = require("../models/User.model");
 const jwt = require("jsonwebtoken");
 const OTP = require("../models/OTP.model");
 const registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, latitude, longitude } = req.body;
   try {
     //check if user Exists
     const userExists = await User.findOne({ email });
-    if (userExists) res.status(400).json({ message: "user already exists" });
+    if (userExists)
+      return res.status(400).json({ message: "user already exists" });
+
+    const checkForOTP = await OTP.findOne({ contactInfo: email });
+    console.log(checkForOTP, email);
+
+    if (!checkForOTP.verified)
+      return res.status(400).json({ message: "OTP not verified" });
+    if (checkForOTP.verified) {
+      await OTP.findByIdAndDelete(checkForOTP._id);
+    }
 
     //Create the user
-    const user = new User({ name, email, password });
+    const user = new User({ name, email, password, latitude, longitude });
     await user.save();
     //build the token
     const token = jwt.sign({ userID: user._id }, process.env.SecretKey, {
@@ -24,7 +34,7 @@ const registerUser = async (req, res) => {
   }
 };
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, latitude, longitude } = req.body;
   try {
     //check if user Exists
     const user = await User.findOne({ email });
@@ -32,14 +42,20 @@ const loginUser = async (req, res) => {
 
     // Check if password matches
     const isMatch = await user.matchPassword(password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch || !latitude || !longitude)
+      return res
+        .status(400)
+        .json({ message: "Invalid credentials/missing coordinates" });
 
+    user.longitude = longitude;
+    user.latitude = latitude;
+    await user.save();
     // Return JWT
     const token = jwt.sign({ userId: user._id }, process.env.SecretKey, {
       expiresIn: "1h",
     });
-    res.status(201).json({ token: token, id: user._id });
+    user.password = "undefined";
+    res.status(201).json({ token: token, user: user });
   } catch (error) {
     res.status(500).json({ message: "Error while trying to login", error });
   }
@@ -50,6 +66,9 @@ const sendOTP = async (req, res) => {
   if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
     return res.status(400).json({ message: "Invalid email address" });
   }
+  const userExists = await User.findOne({ email });
+  if (userExists)
+    return res.status(400).json({ message: "user already exists" });
   const generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
 
   const getEmailHTML = (otp) => {
@@ -137,7 +156,7 @@ const sendOTP = async (req, res) => {
   const emailData = {
     sender: {
       name: "delllootp",
-      email: "delllootp@gmail.com",
+      email: "delllootp@noreply.com",
     },
     to: [
       {
@@ -164,16 +183,14 @@ const sendOTP = async (req, res) => {
       requestOptions
     );
     if (!response.ok) {
-      throw new Error(`Email sending failed with status: ${response.status}`);
+      throw new Error(
+        `Email sending failed with status: ${response.status} ${response.message}`
+      );
     }
-    await OTP.findOneAndUpdate(
-      { contactInfo: email }, // Match the document using the email
-      {
-        contactInfo: email,
-        code: generatedOTP,
-      },
-      { upsert: true, new: true } // Create if not found, return the updated document
-    );
+    await OTP.create({
+      contactInfo: email,
+      code: generatedOTP,
+    });
 
     res.status(200).json({ message: "Email was sent successfully" });
   } catch (error) {
@@ -194,6 +211,7 @@ const verifyOTP = async (req, res) => {
   try {
     // Retrieve the OTP document
     const oldOtp = await OTP.findOne({ contactInfo: email });
+
     if (!oldOtp) {
       return res.status(404).json({ message: "OTP not found or expired" });
     }
@@ -210,23 +228,12 @@ const verifyOTP = async (req, res) => {
     }
 
     // Delete OTP document after successful verification
-    await OTP.findByIdAndDelete(oldOtp._id);
-
-    // Update user's verification status
-    const updatedUser = await User.findOneAndUpdate(
-      { email: email },
-      { verified: true },
-      { new: true } // Return the updated document
-    );
-
-    if (!updatedUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    await OTP.findByIdAndUpdate(oldOtp._id, { verified: true }, { new: true });
 
     res.status(200).json({ message: "OTP verified successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "An error occurred" });
+    res.status(500).json({ message: error.message });
   }
 };
 

@@ -41,6 +41,10 @@ const otpSchema = new mongoose.Schema({
   expireAt: {
     type: Date,
   },
+  verified: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Pre-save middleware to calculate `expireAt` 10 minutes from `createdAt`

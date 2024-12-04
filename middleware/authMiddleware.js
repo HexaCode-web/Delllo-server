@@ -7,7 +7,7 @@ const protect = (req, res, next) => {
   ) {
     try {
       token = req.headers.authorization.split(" ")[1];
-      const decoded = jwt.verify(token, "secretKey");
+      const decoded = jwt.verify(token, process.env.SecretKey);
       req.userId = decoded.userId;
       next();
     } catch (error) {
