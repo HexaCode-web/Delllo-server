@@ -8,16 +8,20 @@ const authRoutes = require("./routes/Auth.route");
 const profileRoutes = require("./routes/Profile.route");
 const organizationRoutes = require("./routes/Organization.route");
 const networkRoutes = require("./routes/Network.route.js");
+const corsOptions = require("./middleware/corsOptions");
+const cors = require("cors");
+
 const mongoDB = process.env.DB;
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(cors(corsOptions));
 
 //routes
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/organization", organizationRoutes);
-app.use("/api/network", networkRoutes);
+app.use("/api/  ", networkRoutes);
 
 mongoose
   .connect(mongoDB)
