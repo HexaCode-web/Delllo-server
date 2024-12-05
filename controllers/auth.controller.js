@@ -2,39 +2,59 @@ const User = require("../models/User.model");
 const jwt = require("jsonwebtoken");
 const OTP = require("../models/OTP.model");
 const registerUser = async (req, res) => {
-  const { name, email, password, latitude, longitude } = req.body;
+  const { username, email, password, latitude, longitude } = req.body;
   try {
-    //check if user Exists
+    // Check if user already exists based on primary email
     const userExists = await User.findOne({ email });
     if (userExists)
-      return res.status(400).json({ message: "user already exists" });
+      return res.status(400).json({ message: "User already exists" });
 
+    // Check for OTP
     const checkForOTP = await OTP.findOne({ contactInfo: email });
-    console.log(checkForOTP, email);
-
-    if (!checkForOTP.verified)
+    if (!checkForOTP || !checkForOTP.verified) {
       return res.status(400).json({ message: "OTP not verified" });
-    if (checkForOTP.verified) {
-      await OTP.findByIdAndDelete(checkForOTP._id);
     }
 
-    //Create the user
-    const user = new User({ name, email, password, latitude, longitude });
+    // Clean up associatedEmails to avoid null or empty values
+    const cleanAssociatedEmails = (emails) => {
+      return emails.filter(
+        (emailObj) => emailObj.email && emailObj.email.trim() !== ""
+      );
+    };
+
+    // If OTP is verified, delete OTP record
+    await OTP.findByIdAndDelete(checkForOTP._id);
+
+    // Create user with clean associatedEmails
+    const user = new User({
+      name: username,
+      email,
+      password,
+      latitude,
+      longitude,
+      associatedEmails: cleanAssociatedEmails([{ email }]), // Ensure it's cleaned
+    });
+
     await user.save();
-    //build the token
+
+    // Generate JWT token
     const token = jwt.sign({ userID: user._id }, process.env.SecretKey, {
       expiresIn: "1h",
     });
-    res.status(201).json({ token });
-    //send the token back
+
+    res.status(200).json({ token });
   } catch (error) {
+    console.log(error); // Log the error for debugging
     res
       .status(500)
       .json({ message: "Error registering user", error: error.message });
   }
 };
+
 const loginUser = async (req, res) => {
   const { email, password, latitude, longitude } = req.body;
+  console.log(req.body);
+
   try {
     //check if user Exists
     const user = await User.findOne({ email });
@@ -63,71 +83,28 @@ const loginUser = async (req, res) => {
 
 const sendOTP = async (req, res) => {
   const { email } = req.body;
+
+  // Validate email
   if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
     return res.status(400).json({ message: "Invalid email address" });
   }
+
+  // Check if the user exists (optional based on your use case)
   const userExists = await User.findOne({ email });
   if (userExists)
-    return res.status(400).json({ message: "user already exists" });
+    return res.status(400).json({ message: "User already exists" });
+
+  // Generate new OTP
   const generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
 
+  // HTML email content
   const getEmailHTML = (otp) => {
     return `
       <!DOCTYPE html>
       <html>
       <head>
         <style>
-          body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-          }
-          .email-container {
-            max-width: 600px;
-            margin: 20px auto;
-            background: #ffffff;
-            border: 1px solid #dddddd;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-          }
-          .email-header {
-            background-color: #007BFF;
-            color: #ffffff;
-            padding: 20px;
-            text-align: center;
-          }
-          .email-header h1 {
-            margin: 0;
-            font-size: 24px;
-          }
-          .email-body {
-            padding: 20px;
-          }
-          .otp-code {
-            font-size: 32px;
-            font-weight: bold;
-            color: #007BFF;
-            text-align: center;
-            margin: 20px auto;
-            padding: 10px;
-            border: 1px dashed #007BFF;
-            display: inline-block;
-            background: #f9f9f9;
-          }
-          .email-footer {
-            background-color: #f4f4f4;
-            color: #555555;
-            font-size: 12px;
-            padding: 10px 20px;
-            text-align: center;
-            border-top: 1px solid #dddddd;
-          }
-          .email-footer a {
-            color: #007BFF;
-            text-decoration: none;
-          }
+          /* Styling for the email */
         </style>
       </head>
       <body>
@@ -153,6 +130,7 @@ const sendOTP = async (req, res) => {
 
   const emailHtml = getEmailHTML(generatedOTP);
 
+  // Email data
   const emailData = {
     sender: {
       name: "delllootp",
@@ -167,36 +145,57 @@ const sendOTP = async (req, res) => {
     htmlContent: emailHtml,
   };
 
+  // Request options for sending email
   const requestOptions = {
     method: "POST",
     headers: {
       accept: "application/json",
-      // eslint-disable-next-line no-undef
       "api-key": process.env.MailKey,
       "content-type": "application/json",
     },
     body: JSON.stringify(emailData),
   };
+
   try {
+    // Check if OTP already exists for the email
+    let otpRecord = await OTP.findOne({ contactInfo: email });
+
+    if (otpRecord) {
+      // If OTP exists, update it with new OTP and reset verified status
+      otpRecord.code = generatedOTP;
+      otpRecord.verified = false;
+      otpRecord.expiryTime = Date.now() + 10 * 60 * 1000; // 10 minutes validity
+      await otpRecord.save(); // Save the updated OTP record
+    } else {
+      // If no OTP exists for the email, create a new record
+      otpRecord = new OTP({
+        contactInfo: email,
+        code: generatedOTP,
+        verified: false,
+        expiryTime: Date.now() + 10 * 60 * 1000, // 10 minutes validity
+      });
+      await otpRecord.save(); // Save the new OTP record
+    }
+
+    // Send the OTP email
     const response = await fetch(
       "https://api.brevo.com/v3/smtp/email",
       requestOptions
     );
+
     if (!response.ok) {
       throw new Error(
         `Email sending failed with status: ${response.status} ${response.message}`
       );
     }
-    await OTP.create({
-      contactInfo: email,
-      code: generatedOTP,
-    });
 
-    res.status(200).json({ message: "Email was sent successfully" });
+    // Respond to the client
+    res.status(200).json({ message: "OTP sent successfully" });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 };
+
 const verifyOTP = async (req, res) => {
   const { email, sentOTP } = req.body;
 

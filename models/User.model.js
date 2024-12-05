@@ -90,7 +90,7 @@ const userSchema = mongoose.Schema(
     latitude: { type: String, require: true },
     associatedEmails: [
       {
-        email: { type: String, required: true, unique: true },
+        email: { type: String, required: false },
       },
     ],
     skills: {
