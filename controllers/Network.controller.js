@@ -13,6 +13,18 @@ const createNetwork = async (req, res) => {
     latitude,
     longitude,
   } = req.body;
+  console.log(
+    name,
+    startDate,
+    endDate,
+    size,
+    orgId,
+    adminId,
+    type,
+    latitude,
+    longitude
+  );
+
   if (
     !name ||
     !startDate ||

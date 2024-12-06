@@ -1,9 +1,12 @@
 const Organization = require("../models/Organization.model");
 const OTP = require("../models/OTP.model");
+
 const User = require("../models/User.model");
+const { addAssociatedEmailLogic } = require("./Profile.controller");
 const registerOrganization = async (req, res) => {
-  const { name, email, latitude, longitude, address } = req.body;
-  if (!name || !email || !latitude || !longitude || !address) {
+  const { name, email, latitude, longitude, address, userId } = req.body;
+
+  if (!name || !email || !latitude || !longitude || !address || !userId) {
     return res.status(400).json({ message: "Invalid request" });
   }
   const domain = email.split("@")[1];
@@ -33,6 +36,15 @@ const registerOrganization = async (req, res) => {
     });
 
     await organization.save();
+    try {
+      await addAssociatedEmailLogic(userId, email);
+    } catch (apiError) {
+      console.error("Error adding associated email:", apiError.message);
+      return res.status(500).json({
+        message: "Organization registered, but failed to add associated email",
+        error: apiError.message,
+      });
+    }
     res.status(201).json({ organization }); // Return created organization
   } catch (error) {
     res.status(500).json({
@@ -58,7 +70,7 @@ const updateOrganization = async (req, res) => {
       return res.status(404).json({ message: "Organization not found" });
     }
 
-    // Return the updated user
+    // Return the updated Org
     res
       .status(200)
       .json({ message: "Organization updated successfully", organization });

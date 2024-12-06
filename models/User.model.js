@@ -4,7 +4,7 @@ const skillSchema = new mongoose.Schema({
   Level: {
     type: String,
     required: false,
-    enum: ["beginner", "Intermediate", "Advanced"], // Only allow these values
+    enum: ["Beginner", "Intermediate", "Advanced"], // Only allow these values
   },
   Skill: {
     type: String,
@@ -91,6 +91,7 @@ const userSchema = mongoose.Schema(
     associatedEmails: [
       {
         email: { type: String, required: false },
+        OrgId: { type: String, required: false },
       },
     ],
     skills: {

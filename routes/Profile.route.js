@@ -16,6 +16,9 @@ const {
   editPresentRole,
   updateProfile,
   addAssociatedEmail,
+  editPreviousRole,
+  addPreviousRole,
+  deletePreviousRole,
 } = require("../controllers/Profile.controller");
 const router = express.Router();
 
@@ -36,6 +39,10 @@ router.delete("/education/delete/:id", protect, deleteEducation);
 router.post("/businessDriver/add/:id", protect, addBusinessDriver);
 router.put("/businessDriver/update/:id", protect, editBusinessDriver);
 router.delete("/businessDriver/delete/:id", protect, deleteBusinessDriver);
+//PreviousRole
+router.post("/previousRole/add/:id", protect, addPreviousRole);
+router.put("/previousRole/update/:id", protect, editPreviousRole);
+router.delete("/previousRole/delete/:id", protect, deletePreviousRole);
 
 router.put("/presentRole/update/:Id", protect, editPresentRole);
 router.put("/updateProfile/:Id", protect, updateProfile);

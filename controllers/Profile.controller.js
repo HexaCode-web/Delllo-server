@@ -6,12 +6,15 @@ const addSkill = async (req, res) => {
   try {
     const { userId } = req;
     const { skill } = req.body;
-    console.log(skill, userId);
-
+    console.log(skill);
     if (!userId || !skill) {
       return res.status(400).json({ message: "Invalid request" });
     }
-    if (!["beginner", "Intermediate", "Advanced"].includes(skill.Level)) {
+    if (
+      !["beginner", "intermediate", "advanced"].includes(
+        skill.Level.toLowerCase()
+      )
+    ) {
       return res.status(400).json({ message: "Invalid skill level" });
     }
     const user = await User.findByIdAndUpdate(
@@ -312,6 +315,89 @@ const deleteBusinessDriver = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+//PreviousRole
+const addPreviousRole = async (req, res) => {
+  try {
+    const { userId } = req;
+    const { PreviousRole } = req.body;
+    console.log(PreviousRole, userId);
+
+    if (!userId || !PreviousRole) {
+      return res.status(400).json({ message: "Invalid request" });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $push: { previousRoles: PreviousRole } },
+      { new: true }
+    );
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+const editPreviousRole = async (req, res) => {
+  try {
+    const { userId } = req;
+    const { PreviousRoleId, updatedPreviousRole } = req.body;
+
+    if (!userId || !PreviousRoleId || !updatedPreviousRole) {
+      return res.status(400).json({ message: "Invalid request" });
+    }
+
+    const user = await User.findOneAndUpdate(
+      { _id: userId, "previousRoles._id": PreviousRoleId },
+      {
+        $set: {
+          "previousRoles.$": updatedPreviousRole,
+        },
+      },
+      { new: true }
+    );
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "User or business driver not found" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Business driver updated successfully", user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+const deletePreviousRole = async (req, res) => {
+  try {
+    const { userId } = req;
+    const { PreviousRoleId } = req.body;
+
+    if (!userId || !PreviousRoleId) {
+      return res.status(400).json({ message: "Invalid request" });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $pull: { previousRoles: { _id: PreviousRoleId } } },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "businessDriver removed successfully", user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const updateProfile = async (req, res) => {
   try {
     const { Id } = req.params; // Assuming `userId` is attached to `req` via middleware
@@ -375,50 +461,79 @@ const editPresentRole = async (req, res) => {
 };
 const addAssociatedEmail = async (req, res) => {
   const { userId, email } = req.params;
-  console.log(email);
 
   try {
+    // Call the logic function, which no longer handles res directly
+    const result = await addAssociatedEmailLogic(userId, email);
+
+    // Send the response based on the result returned by the logic function
+    res.status(result.status).send(result.message);
+  } catch (error) {
+    // Catch and handle any errors, ensuring response handling is done here
+    res.status(500).send("Internal Server Error: " + error.message);
+  }
+};
+
+const addAssociatedEmailLogic = async (userId, email) => {
+  try {
+    // Find user and organization by their respective IDs or email
     const user = await User.findById(userId);
-    // Perform the logic to associate email with the user
     const organization = await Organization.findOne({
       admins: { $elemMatch: { Email: email } },
     });
 
+    // If user or organization not found, return an error result
     if (!organization || !user) {
-      return res.status(404).send("Organization or user not found.");
+      return {
+        status: 404,
+        message: "Organization or user not found.",
+      };
     }
+
+    // If email is already associated with the user, return error message
     if (user.associatedEmails.includes(email)) {
-      return res
-        .status(400)
-        .send("Email is already associated with this user.");
+      return {
+        status: 400,
+        message: "Email is already associated with this user.",
+      };
     }
+
+    // Check if the admin entry exists and if the invite is valid
     const adminEntry = organization.admins.find(
       (admin) => admin.Email === email
     );
 
     if (!adminEntry || adminEntry.acceptedInvite) {
-      return res.status(400).send("Invalid or already accepted invite.");
+      return {
+        status: 400,
+        message: "Invalid or already accepted invite.",
+      };
     }
 
-    // Update the invite status
+    // Update invite status and push email to user's associated emails
     adminEntry.acceptedInvite = true;
-    user.associatedEmails.push({ email });
+    user.associatedEmails.push({ email: email, OrgId: organization._id });
 
+    // Save changes to user and organization
     await user.save();
     await organization.save();
 
-    return res.send(
-      `<html>
+    // Return success message as HTML
+    return {
+      status: 200,
+      message: `<html>
         <body style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
           <h1>Invite Accepted!</h1>
           <p>Thank you for accepting the invite to join the organization.</p>
         </body>
-      </html>`
-    );
+      </html>`,
+    };
   } catch (error) {
-    return res.status(500).send(error);
+    // Return error object with status and message
+    throw new Error("Error associating email: " + error.message);
   }
 };
+
 module.exports = {
   addSkill,
   deleteSkill,
@@ -432,7 +547,11 @@ module.exports = {
   deleteBusinessDriver,
   editBusinessDriver,
   addBusinessDriver,
+  editPreviousRole,
+  addPreviousRole,
+  deletePreviousRole,
   editPresentRole,
   updateProfile,
   addAssociatedEmail,
+  addAssociatedEmailLogic,
 };

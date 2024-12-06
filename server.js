@@ -4,11 +4,11 @@ const app = express();
 const port = process.env.PORT || 3000;
 const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
-const authRoutes = require("./routes/Auth.route");
-const profileRoutes = require("./routes/Profile.route");
-const organizationRoutes = require("./routes/Organization.route");
+const authRoutes = require("./routes/Auth.route.js");
+const profileRoutes = require("./routes/Profile.route.js");
+const organizationRoutes = require("./routes/Organization.route.js");
 const networkRoutes = require("./routes/Network.route.js");
-const corsOptions = require("./middleware/corsOptions");
+const corsOptions = require("./middleware/corsOptions.js");
 const cors = require("cors");
 
 const mongoDB = process.env.DB;
@@ -21,7 +21,7 @@ app.use(cors(corsOptions));
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/organization", organizationRoutes);
-app.use("/api/  ", networkRoutes);
+app.use("/api/network", networkRoutes);
 
 mongoose
   .connect(mongoDB)
