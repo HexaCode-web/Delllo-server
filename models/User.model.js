@@ -81,19 +81,26 @@ const previousRolesSchema = new mongoose.Schema({
     required: false,
   },
 });
+const associatedEmailsSchema = new mongoose.Schema({
+  email: {
+    type: String,
+    sparse: true, // Only index non-null, non-undefined values
+    required: false,
+  },
+  OrgId: { type: String, required: false },
+});
 const userSchema = mongoose.Schema(
   {
-    name: { type: String, require: true },
+    FirstName: { type: String, require: true },
+    LastName: { type: String, require: true },
     email: { type: String, require: true, unique: true },
     password: { type: String, require: true },
     longitude: { type: String, require: true },
     latitude: { type: String, require: true },
-    associatedEmails: [
-      {
-        email: { type: String, required: false },
-        OrgId: { type: String, required: false },
-      },
-    ],
+    associatedEmails: {
+      type: [associatedEmailsSchema],
+      default: () => [],
+    },
     skills: {
       type: [skillSchema],
       default: [],

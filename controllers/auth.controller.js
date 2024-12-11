@@ -2,7 +2,9 @@ const User = require("../models/User.model");
 const jwt = require("jsonwebtoken");
 const OTP = require("../models/OTP.model");
 const registerUser = async (req, res) => {
-  const { username, email, password, latitude, longitude } = req.body;
+  const { FirstName, LastName, email, password, latitude, longitude } =
+    req.body;
+
   try {
     // Check if user already exists based on primary email
     const userExists = await User.findOne({ email });
@@ -16,23 +18,18 @@ const registerUser = async (req, res) => {
     }
 
     // Clean up associatedEmails to avoid null or empty values
-    const cleanAssociatedEmails = (emails) => {
-      return emails.filter(
-        (emailObj) => emailObj.email && emailObj.email.trim() !== ""
-      );
-    };
 
     // If OTP is verified, delete OTP record
     await OTP.findByIdAndDelete(checkForOTP._id);
 
     // Create user with clean associatedEmails
     const user = new User({
-      name: username,
+      FirstName,
+      LastName,
       email,
       password,
       latitude,
       longitude,
-      associatedEmails: cleanAssociatedEmails([{ email }]), // Ensure it's cleaned
     });
 
     await user.save();

@@ -5,13 +5,14 @@ const {
   registerUser,
   sendOTP,
   verifyOTP,
-} = require("../controllers/auth.controller");
+} = require("../controllers/auth.controller.js");
 const router = express.Router();
 
 router.post(
   "/register",
   [
-    check("username").notEmpty().withMessage("Username is required"),
+    check("LastName").notEmpty().withMessage("LastName is required"),
+    check("FirstName").notEmpty().withMessage("FirstName is required"),
     check("email").isEmail().withMessage("Email is not valid"),
     check("password")
       .isLength({ min: 6 })
@@ -20,7 +21,7 @@ router.post(
   (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400), json({ errors: errors.array() });
+      return res.status(400).json({ errors: errors.array() });
     }
     registerUser(req, res);
   }
