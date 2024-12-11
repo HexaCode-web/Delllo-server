@@ -15,6 +15,12 @@ const skillSchema = new mongoose.Schema({
     required: false, // Reference is optional
   },
 });
+const ImmediateNeedSchema = new mongoose.Schema({
+  ImmediateNeed: {
+    type: String,
+    required: false, // Ensure a skill name is always provided
+  },
+});
 const highlightsSchema = new mongoose.Schema({
   Highlight: {
     type: String,
@@ -49,6 +55,10 @@ const educationSchema = new mongoose.Schema({
     required: false,
   },
   StartDate: {
+    type: String,
+    required: false,
+  },
+  EndDate: {
     type: String,
     required: false,
   },
@@ -103,6 +113,10 @@ const userSchema = mongoose.Schema(
     },
     skills: {
       type: [skillSchema],
+      default: [],
+    },
+    ImmediateNeeds: {
+      type: [ImmediateNeedSchema],
       default: [],
     },
     highlights: {

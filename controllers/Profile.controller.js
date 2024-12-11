@@ -235,6 +235,86 @@ const deleteEducation = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+// immediate needs
+
+const addImmediateNeeds = async (req, res) => {
+  try {
+    const { userId } = req;
+    const { ImmediateNeed } = req.body;
+
+    if (!userId || !ImmediateNeed) {
+      return res.status(400).json({ message: "Invalid request" });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $push: { ImmediateNeeds: ImmediateNeed } },
+      { new: true }
+    );
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+const editImmediateNeeds = async (req, res) => {
+  try {
+    const { userId } = req;
+    const { immediateNeedId, updatedImmediateNeed } = req.body;
+
+    if (!userId || !immediateNeedId || !updatedImmediateNeed) {
+      return res.status(400).json({ message: "Invalid request" });
+    }
+
+    const user = await User.findOneAndUpdate(
+      { _id: userId, "ImmediateNeeds._id": immediateNeedId },
+      {
+        $set: {
+          "ImmediateNeeds.$": updatedImmediateNeed,
+        },
+      },
+      { new: true }
+    );
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "User or ImmediateNeed not found" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "ImmediateNeed updated successfully", user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+const deleteImmediateNeeds = async (req, res) => {
+  try {
+    const { userId } = req;
+    const { immediateNeedId } = req.body;
+
+    if (!userId || !immediateNeedId) {
+      return res.status(400).json({ message: "Invalid request" });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $pull: { ImmediateNeeds: { _id: immediateNeedId } } },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Immediate Need removed successfully", user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
 //businessDrivers
 const addBusinessDriver = async (req, res) => {
   try {
@@ -551,6 +631,10 @@ module.exports = {
   addPreviousRole,
   deletePreviousRole,
   editPresentRole,
+  addImmediateNeeds,
+  editImmediateNeeds,
+  deleteImmediateNeeds,
+
   updateProfile,
   addAssociatedEmail,
   addAssociatedEmailLogic,
