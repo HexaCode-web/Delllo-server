@@ -22,6 +22,7 @@ const {
   deleteImmediateNeeds,
   editImmediateNeeds,
   addImmediateNeeds,
+  getProfileById,
 } = require("../controllers/Profile.controller");
 const router = express.Router();
 
@@ -54,4 +55,5 @@ router.delete("/previousRole/delete/:id", protect, deletePreviousRole);
 router.put("/presentRole/update/:Id", protect, editPresentRole);
 router.put("/updateProfile/:Id", protect, updateProfile);
 router.get("/addAssociatedEmail/:userId/:email", addAssociatedEmail);
+router.get("/:id", getProfileById);
 module.exports = router;
