@@ -3,6 +3,24 @@ const OTP = require("../models/OTP.model");
 
 const User = require("../models/User.model");
 const { addAssociatedEmailLogic } = require("./Profile.controller");
+const getOrgById = async (req, res) => {
+  const { orgId } = req.params;
+  console.log(orgId);
+
+  if (!orgId) {
+    return res.status(400).json({ message: "Invalid request" });
+  }
+  try {
+    const organization = await Organization.findById(orgId);
+    if (!organization) {
+      return res.status(404).json({ message: "Organization not found" });
+    }
+    res.status(200).json(organization);
+  } catch (error) {
+    console.error("Error fetching organization:", error.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
 const registerOrganization = async (req, res) => {
   const { name, email, latitude, longitude, address, userId } = req.body;
 
@@ -320,6 +338,7 @@ function extractDomainFromEmail(email) {
 }
 
 module.exports = {
+  getOrgById,
   registerOrganization,
   addAdmin,
   updateOrganization,

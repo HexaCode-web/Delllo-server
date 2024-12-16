@@ -31,6 +31,7 @@ const editSkill = async (req, res) => {
   try {
     const { userId } = req; // Assuming the user ID is extracted from the token
     const { skillId, updatedSkill } = req.body; // `skillId` to locate the skill, `updatedSkill` contains new values
+    console.log(updatedSkill, skillId);
 
     if (!userId || !skillId || !updatedSkill) {
       return res.status(400).json({ message: "Invalid request" });
@@ -114,26 +115,33 @@ const editHighLight = async (req, res) => {
     const { userId } = req;
     const { highLightId, updatedHighLight } = req.body;
 
-    if (!userId || !highLightId || !updatedHighLight) {
-      return res.status(400).json({ message: "Invalid request" });
+    if (!updatedHighLight) {
+      return res
+        .status(400)
+        .json({ message: "Updated highlight data is missing" });
     }
 
+    // Debug inputs
+    console.log("Inputs: ", { userId, highLightId, updatedHighLight });
+
+    // Perform the update
     const user = await User.findOneAndUpdate(
-      { _id: userId, "highLights._id": highLightId },
+      { _id: userId, "highlights._id": highLightId }, // Ensure this matches your schema
       {
         $set: {
-          "highlights.$": updatedHighLight,
+          "highlights.$": updatedHighLight, // Use positional operator to update specific highlight
         },
       },
-      { new: true }
+      { new: true } // Return the updated document
     );
 
     if (!user) {
       return res.status(404).json({ message: "User or highlight not found" });
     }
 
-    res.status(200).json({ message: "highlight updated successfully", user });
+    res.status(200).json({ message: "Highlight updated successfully", user });
   } catch (error) {
+    console.error("Error in editHighLight: ", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -148,7 +156,7 @@ const deleteHighLight = async (req, res) => {
 
     const user = await User.findByIdAndUpdate(
       userId,
-      { $pull: { highLights: { _id: highLightId } } },
+      { $pull: { highlights: { _id: highLightId } } },
       { new: true }
     );
 

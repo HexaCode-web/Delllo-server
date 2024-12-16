@@ -6,8 +6,10 @@ const {
   updateOrganization,
   removeAdmin,
   deleteOrganization,
+  getOrgById,
 } = require("../controllers/organization.controller.js");
 const router = express.Router();
+router.get("/:orgId", protect, getOrgById);
 router.post("/add", protect, registerOrganization);
 router.put("/addAdmin", protect, addAdmin);
 router.put("/update/:OrgId", protect, updateOrganization);
