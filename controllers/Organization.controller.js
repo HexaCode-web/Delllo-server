@@ -5,7 +5,6 @@ const User = require("../models/User.model");
 const { addAssociatedEmailLogic } = require("./Profile.controller");
 const getOrgById = async (req, res) => {
   const { orgId } = req.params;
-  console.log(orgId);
 
   if (!orgId) {
     return res.status(400).json({ message: "Invalid request" });

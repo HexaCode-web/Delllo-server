@@ -6,7 +6,6 @@ const addSkill = async (req, res) => {
   try {
     const { userId } = req;
     const { skill } = req.body;
-    console.log(skill);
     if (!userId || !skill) {
       return res.status(400).json({ message: "Invalid request" });
     }
@@ -31,7 +30,6 @@ const editSkill = async (req, res) => {
   try {
     const { userId } = req; // Assuming the user ID is extracted from the token
     const { skillId, updatedSkill } = req.body; // `skillId` to locate the skill, `updatedSkill` contains new values
-    console.log(updatedSkill, skillId);
 
     if (!userId || !skillId || !updatedSkill) {
       return res.status(400).json({ message: "Invalid request" });
@@ -122,7 +120,6 @@ const editHighLight = async (req, res) => {
     }
 
     // Debug inputs
-    console.log("Inputs: ", { userId, highLightId, updatedHighLight });
 
     // Perform the update
     const user = await User.findOneAndUpdate(
@@ -409,7 +406,6 @@ const addPreviousRole = async (req, res) => {
   try {
     const { userId } = req;
     const { PreviousRole } = req.body;
-    console.log(PreviousRole, userId);
 
     if (!userId || !PreviousRole) {
       return res.status(400).json({ message: "Invalid request" });

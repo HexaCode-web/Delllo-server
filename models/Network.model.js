@@ -34,14 +34,19 @@ const networkSchema = new mongoose.Schema(
       ref: "Organization",
       required: true,
     },
-    latitude: {
-      type: String,
-      required: true,
+    coordinates: {
+      type: { type: String, default: "Point" },
+      coordinates: [Number], // [longitude, latitude]
     },
-    longitude: {
-      type: String,
-      required: true,
-    },
+    Dismissed: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User", // Reference to the User model, store ObjectId
+          required: true,
+        },
+      },
+    ],
     Pending: [
       {
         userId: {
@@ -72,5 +77,6 @@ const networkSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+networkSchema.index({ coordinates: "2dsphere" }); // Create a 2dsphere index for geospatial queries
 
 module.exports = mongoose.model("Network", networkSchema);

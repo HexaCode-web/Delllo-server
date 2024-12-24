@@ -99,6 +99,13 @@ const associatedEmailsSchema = new mongoose.Schema({
   },
   OrgId: { type: String, required: false },
 });
+const joinedNetworksSchema = new mongoose.Schema({
+  networkId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Network", // Reference to the User model, store ObjectId
+    required: true,
+  },
+});
 const userSchema = mongoose.Schema(
   {
     FirstName: { type: String, require: true },
@@ -109,6 +116,10 @@ const userSchema = mongoose.Schema(
     latitude: { type: String, require: true },
     associatedEmails: {
       type: [associatedEmailsSchema],
+      default: () => [],
+    },
+    joinedNetworks: {
+      type: [joinedNetworksSchema],
       default: () => [],
     },
     skills: {

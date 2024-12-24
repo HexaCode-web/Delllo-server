@@ -1,6 +1,6 @@
 const { default: mongoose } = require("mongoose");
 const Network = require("../models/Network.model");
-
+const User = require("../models/User.model");
 const createNetwork = async (req, res) => {
   const {
     name,
@@ -13,18 +13,6 @@ const createNetwork = async (req, res) => {
     latitude,
     longitude,
   } = req.body;
-  console.log(
-    name,
-    startDate,
-    endDate,
-    size,
-    orgId,
-    adminId,
-    type,
-    latitude,
-    longitude
-  );
-
   if (
     !name ||
     !startDate ||
@@ -47,8 +35,10 @@ const createNetwork = async (req, res) => {
       orgId,
       adminId,
       type,
-      longitude,
-      latitude,
+      coordinates: {
+        type: "Point",
+        coordinates: [parseFloat(longitude), parseFloat(latitude)], // Coordinates in [longitude, latitude]
+      },
     });
     await network.save();
     return res.status(201).json({ message: "Network created successfully" });
@@ -57,6 +47,35 @@ const createNetwork = async (req, res) => {
     return res.status(500).json({ message: "Server Error" });
   }
 };
+const getNearbyNetworks = async (req, res) => {
+  const { latitude, longitude, radius } = req.query;
+
+  // Ensure required parameters are provided
+  if (!latitude || !longitude || !radius) {
+    return res.status(400).json({ message: "Missing required parameters" });
+  }
+
+  try {
+    // Query MongoDB to find networks within the specified radius
+    const networks = await Network.find({
+      coordinates: {
+        $geoWithin: {
+          $centerSphere: [
+            [parseFloat(longitude), parseFloat(latitude)],
+            parseFloat(radius) / 3963.2,
+          ], // Radius in miles (3963.2 is Earth's radius in miles)
+        },
+      },
+    });
+
+    // Return the networks as a response
+    return res.json(networks);
+  } catch (error) {
+    console.error("Error finding nearby networks:", error);
+    return res.status(500).json({ message: "Error finding nearby networks" });
+  }
+};
+
 const getNetwork = async (req, res) => {
   const { networkId } = req.params;
   try {
@@ -116,26 +135,35 @@ const JoinRequest = async (req, res) => {
     const isUserApproved = network.Accepted.some(
       (AcceptedUser) => AcceptedUser.userId.toString() === userId.toString()
     );
-
-    if (isUserPending || isUserApproved || isUserRejected) {
+    const isUserDismissed = network.Dismissed.some(
+      (AcceptedUser) => AcceptedUser.userId.toString() === userId.toString()
+    );
+    if (isUserPending || isUserApproved || isUserRejected || isUserDismissed) {
       return res.status(400).json({
         message: "User is already in the Pending/approved/rejected list",
       });
     }
 
-    // Add the userId to the Pending list
-    // Here, userId is already an ObjectId in string format
-    network.Pending.push({ userId: userId });
-
+    const updatedNetwork = await Network.findByIdAndUpdate(
+      networkId,
+      {
+        $push: { Pending: { userId } }, // Add userId to Accepted array
+      },
+      {
+        new: true, // Return the updated document
+      }
+    );
     // Save the network document with the updated Pending list
     await network.save();
-    return res.status(200).json({ message: "Join request sent successfully" });
+    return res.status(200).json({
+      message: "Join request sent successfully",
+      network: updatedNetwork,
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server Error" });
   }
 };
-
 const approveRequest = async (req, res) => {
   const { networkId, userId } = req.params;
   try {
@@ -144,7 +172,6 @@ const approveRequest = async (req, res) => {
     if (!network) {
       return res.status(404).json({ message: "Network not found" });
     }
-    console.log(network.Pending);
 
     // Check if the userId exists in the Pending list
     const isPending = network.Pending.some(
@@ -155,14 +182,24 @@ const approveRequest = async (req, res) => {
         .status(400)
         .json({ message: "User is not in the Pending list" });
     }
-    await Network.findByIdAndUpdate(networkId, {
-      $push: { Accepted: { userId } }, // Add userId to Accepted array
-      $pull: { Pending: { userId } }, // Remove userId from Pending array
+    const updatedNetwork = await Network.findByIdAndUpdate(
+      networkId,
+      {
+        $push: { Accepted: { userId } }, // Add userId to Accepted array
+        $pull: { Pending: { userId } }, // Remove userId from Pending array
+      },
+      {
+        new: true, // Return the updated document
+      }
+    );
+    const updatedUser = await User.findByIdAndUpdate(userId, {
+      $push: { joinedNetworks: { networkId } }, // Add userId to Accepted array
     });
-
-    return res
-      .status(200)
-      .json({ message: "Join request approved successfully" });
+    return res.status(200).json({
+      message: "Join request approved successfully",
+      network: updatedNetwork,
+      user: updatedUser,
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server Error" });
@@ -186,14 +223,65 @@ const rejectRequest = async (req, res) => {
         .status(400)
         .json({ message: "User is not in the Pending list" });
     }
-    await Network.findByIdAndUpdate(networkId, {
-      $push: { Rejected: { userId } }, // Add userId to Accepted array
-      $pull: { Pending: { userId } }, // Remove userId from Pending array
-    });
+    const updatedNetwork = await Network.findByIdAndUpdate(
+      networkId,
+      {
+        $push: { Rejected: { userId } }, // Add userId to Accepted array
+        $pull: { Pending: { userId } }, // Remove userId from Pending array
+      },
+      {
+        new: true, // Return the updated document
+      }
+    );
 
-    return res
-      .status(200)
-      .json({ message: "Join request approved successfully" });
+    return res.status(200).json({
+      message: "Join request approved successfully",
+      network: updatedNetwork,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+const dismissRequest = async (req, res) => {
+  const { networkId, userId } = req.params;
+  try {
+    const network = await Network.findById(networkId);
+    if (!network) {
+      return res.status(404).json({ message: "Network not found" });
+    }
+    // Check if the userId exists in the Pending list
+    const isUserPending = network.Pending.some(
+      (pendingUser) => pendingUser.userId.toString() === userId.toString()
+    );
+    const isUserRejected = network.Rejected.some(
+      (RejectedUser) => RejectedUser.userId.toString() === userId.toString()
+    );
+    const isUserApproved = network.Accepted.some(
+      (AcceptedUser) => AcceptedUser.userId.toString() === userId.toString()
+    );
+    const isUserDismissed = network.Dismissed.some(
+      (AcceptedUser) => AcceptedUser.userId.toString() === userId.toString()
+    );
+    if (isUserPending || isUserApproved || isUserRejected || isUserDismissed) {
+      return res.status(400).json({
+        message:
+          "User is already in the Pending/approved/rejected/dismissed  list",
+      });
+    }
+    const updatedNetwork = await Network.findByIdAndUpdate(
+      networkId,
+      {
+        $push: { Dismissed: { userId } }, // Add userId to Accepted array
+      },
+      {
+        new: true, // Return the updated document
+      }
+    );
+    return res.status(200).json({
+      message: "Request dismissed successfully",
+      network: updatedNetwork,
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server Error" });
@@ -207,6 +295,8 @@ module.exports = {
   JoinRequest,
   approveRequest,
   rejectRequest,
+  getNearbyNetworks,
+  dismissRequest,
 };
 /*
 
