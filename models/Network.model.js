@@ -7,6 +7,14 @@ const networkSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    licenseID: {
+      type: String,
+      required: false,
+    },
+    licenseType: {
+      type: String,
+      required: false,
+    },
     startDate: {
       type: Date,
       required: true,
@@ -15,11 +23,11 @@ const networkSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-    type: {
-      type: String,
-      required: true,
-      enum: ["Private", "Public"], // Replace with valid types
+    renewalPoint: {
+      type: Date,
+      required: false,
     },
+
     size: {
       type: Number,
       required: true,
@@ -39,6 +47,15 @@ const networkSchema = new mongoose.Schema(
       coordinates: [Number], // [longitude, latitude]
     },
     Dismissed: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User", // Reference to the User model, store ObjectId
+          required: true,
+        },
+      },
+    ],
+    Admins: [
       {
         userId: {
           type: mongoose.Schema.Types.ObjectId,

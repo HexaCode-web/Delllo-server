@@ -2,8 +2,16 @@ const User = require("../models/User.model");
 const jwt = require("jsonwebtoken");
 const OTP = require("../models/OTP.model");
 const registerUser = async (req, res) => {
-  const { FirstName, LastName, email, password, latitude, longitude } =
-    req.body;
+  const {
+    FirstName,
+    LastName,
+    email,
+    password,
+    latitude,
+    longitude,
+    DOB,
+    Address,
+  } = req.body;
 
   try {
     // Check if user already exists based on primary email
@@ -30,6 +38,8 @@ const registerUser = async (req, res) => {
       password,
       latitude,
       longitude,
+      DOB,
+      Address,
     });
 
     await user.save();

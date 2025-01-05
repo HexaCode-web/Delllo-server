@@ -21,9 +21,27 @@ const getOrgById = async (req, res) => {
   }
 };
 const registerOrganization = async (req, res) => {
-  const { name, email, latitude, longitude, address, userId } = req.body;
+  const {
+    name,
+    email,
+    latitude,
+    longitude,
+    address,
+    userId,
+    type,
+    officeName,
+  } = req.body;
 
-  if (!name || !email || !latitude || !longitude || !address || !userId) {
+  if (
+    !name ||
+    !email ||
+    !latitude ||
+    !longitude ||
+    !address ||
+    !userId ||
+    !type ||
+    !officeName
+  ) {
     return res.status(400).json({ message: "Invalid request" });
   }
   const domain = email.split("@")[1];
@@ -49,6 +67,8 @@ const registerOrganization = async (req, res) => {
       domain,
       admins: [{ Email: email }],
       latitude,
+      type,
+      officeName,
       longitude,
     });
 

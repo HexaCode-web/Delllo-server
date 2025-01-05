@@ -3,6 +3,17 @@ const mongoose = require("mongoose");
 const organizationSchema = mongoose.Schema({
   name: { type: String, required: true },
   address: { type: String, required: true },
+  type: {
+    type: String,
+    required: true,
+    enum: [
+      "Financial Services",
+      "Software Services",
+      "Legal Services",
+      "Sports Services",
+    ],
+  },
+  officeName: { type: String, required: true },
   domain: {
     type: String,
     required: true,

@@ -1,6 +1,6 @@
 const User = require("../models/User.model");
 const Organization = require("../models/Organization.model");
-
+const bcrypt = require("bcrypt");
 //skills
 const addSkill = async (req, res) => {
   try {
@@ -515,7 +515,41 @@ const updateProfile = async (req, res) => {
     });
   }
 };
+const changePassword = async (req, res) => {
+  const { userId } = req;
 
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res
+      .status(400)
+      .json({ message: "Please provide both current and new passwords" });
+  }
+
+  try {
+    // Find the user by the authenticated user id (from JWT or session)
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if the current password is correct
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    // Update the user's password in the database
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 const editPresentRole = async (req, res) => {
   try {
     const { Id } = req.params;
@@ -654,4 +688,5 @@ module.exports = {
   updateProfile,
   addAssociatedEmail,
   addAssociatedEmailLogic,
+  changePassword,
 };

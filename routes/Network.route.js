@@ -10,6 +10,10 @@ const {
   getNetwork,
   getNearbyNetworks,
   dismissRequest,
+  createMeetRequest,
+  acceptMeetRequest,
+  getMeetingRequest,
+  rejectMeetRequest,
 } = require("../controllers/Network.controller");
 
 const router = express.Router();
@@ -23,4 +27,9 @@ router.put("/JoinRequest/:networkId/:userId", protect, JoinRequest);
 router.put("/ApproveRequest/:networkId/:userId", protect, approveRequest);
 router.put("/RejectRequest/:networkId/:userId", protect, rejectRequest);
 router.put("/DismissNetwork/:networkId/:userId", protect, dismissRequest);
+
+router.post("/CreateMeetRequest", protect, createMeetRequest);
+router.put("/AcceptMeetRequest/:meetRequestID", protect, acceptMeetRequest);
+router.put("/rejectMeetRequest/:meetRequestID", protect, rejectMeetRequest);
+router.get("/getMeetRequest", protect, getMeetingRequest);
 module.exports = router;
