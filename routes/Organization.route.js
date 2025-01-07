@@ -7,7 +7,7 @@ const {
   removeAdmin,
   deleteOrganization,
   getOrgById,
-} = require("../controllers/organization.controller.js");
+} = require("../controllers/Organization.controller.js");
 const router = express.Router();
 router.get("/:orgId", protect, getOrgById);
 router.post("/add", protect, registerOrganization);
