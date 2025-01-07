@@ -68,7 +68,7 @@ const loginUser = async (req, res) => {
 
     // Check if password matches
     const isMatch = await user.matchPassword(password);
-    if (!isMatch || !latitude || !longitude)
+    if (!isMatch)
       return res
         .status(400)
         .json({ message: "Invalid credentials/missing coordinates" });

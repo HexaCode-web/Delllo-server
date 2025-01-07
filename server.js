@@ -8,6 +8,7 @@ const authRoutes = require("./routes/Auth.route.js");
 const profileRoutes = require("./routes/Profile.route.js");
 const organizationRoutes = require("./routes/Organization.route.js");
 const networkRoutes = require("./routes/Network.route.js");
+const MeetRoutes = require("./routes/Meet.route.js");
 const corsOptions = require("./middleware/corsOptions.js");
 const cors = require("cors");
 
@@ -22,6 +23,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/organization", organizationRoutes);
 app.use("/api/network", networkRoutes);
+app.use("/api/meet", MeetRoutes);
 
 mongoose
   .connect(mongoDB)
