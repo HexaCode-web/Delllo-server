@@ -112,11 +112,11 @@ const userSchema = mongoose.Schema(
     LastName: { type: String, require: true },
     email: { type: String, require: true, unique: true },
     password: { type: String, require: true },
-    longitude: { type: String, require: true },
+    longitude: { type: String, require: false },
     DOB: { type: Date, require: true },
     Address: { type: String, require: true },
     profilePicturesURL: { type: String, require: false },
-    latitude: { type: String, require: true },
+    latitude: { type: String, require: false },
     associatedEmails: {
       type: [associatedEmailsSchema],
       default: () => [],

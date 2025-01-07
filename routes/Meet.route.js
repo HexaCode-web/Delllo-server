@@ -16,7 +16,6 @@ router.put("/rejectMeetRequest/:meetRequestID", protect, rejectMeetRequest);
 router.get("/getMeetRequest", protect, getMeetingRequest);
 router.get(
   "/getMeetRequestForUser/:userIDB/:networkID",
-
   getMeetRequestsForUser
 );
 module.exports = router;
