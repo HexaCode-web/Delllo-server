@@ -1,7 +1,6 @@
 const { default: mongoose } = require("mongoose");
 const Network = require("../models/Network.model");
 const User = require("../models/User.model");
-const MeetRequest = require("../models/MeetRequest.model");
 const createNetwork = async (req, res) => {
   const {
     name,
@@ -90,14 +89,18 @@ const getNearbyNetworks = async (req, res) => {
   }
 
   try {
+    // Convert radius from meters to radians
+    const radiusInMeters = parseFloat(radius);
+    const radiusInRadians = radiusInMeters / 6371000; // Earth's radius in meters
+
     // Query MongoDB to find networks within the specified radius
     const networks = await Network.find({
       coordinates: {
         $geoWithin: {
           $centerSphere: [
             [parseFloat(longitude), parseFloat(latitude)],
-            parseFloat(radius) / 3963.2,
-          ], // Radius in miles (3963.2 is Earth's radius in miles)
+            radiusInRadians,
+          ],
         },
       },
     });
