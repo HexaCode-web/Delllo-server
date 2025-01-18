@@ -12,6 +12,7 @@ const createNetwork = async (req, res) => {
     type,
     latitude,
     longitude,
+    radius,
   } = req.body;
 
   // Validate request fields
@@ -26,6 +27,7 @@ const createNetwork = async (req, res) => {
       type,
       latitude,
       longitude,
+      radius,
     ].some((field) => !field)
   ) {
     return res.status(400).json({ message: "Invalid request: Missing fields" });
@@ -49,6 +51,7 @@ const createNetwork = async (req, res) => {
       orgId,
       adminId,
       type,
+      radius,
       Accepted: [{ userId: adminId }],
       coordinates: {
         type: "Point",
@@ -81,32 +84,66 @@ const createNetwork = async (req, res) => {
 };
 
 const getNearbyNetworks = async (req, res) => {
-  const { latitude, longitude, radius } = req.query;
+  const { latitude, longitude } = req.query;
 
-  // Ensure required parameters are provided
-  if (!latitude || !longitude || !radius) {
-    return res.status(400).json({ message: "Missing required parameters" });
+  // Ensure required parameters are provided and are numbers
+  if (!latitude || !longitude) {
+    return res
+      .status(400)
+      .json({ message: "Missing required parameters: latitude or longitude" });
+  }
+
+  const userLat = parseFloat(latitude);
+  const userLng = parseFloat(longitude);
+
+  if (isNaN(userLat) || isNaN(userLng)) {
+    return res.status(400).json({ message: "Invalid parameter values" });
+  }
+
+  // Haversine distance calculation
+  function calculateDistance(lat1, lng1, lat2, lng2) {
+    const toRad = (value) => (value * Math.PI) / 180;
+
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = toRad(lat1);
+    const φ2 = toRad(lat2);
+    const Δφ = toRad(lat2 - lat1);
+    const Δλ = toRad(lng2 - lng1);
+
+    const a =
+      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // Distance in meters
   }
 
   try {
-    // Convert radius from meters to radians
-    const radiusInMeters = parseFloat(radius);
-    const radiusInRadians = radiusInMeters / 6371000; // Earth's radius in meters
+    const networks = await Network.find(); // Fetch all networks from the database
 
-    // Query MongoDB to find networks within the specified radius
-    const networks = await Network.find({
-      coordinates: {
-        $geoWithin: {
-          $centerSphere: [
-            [parseFloat(longitude), parseFloat(latitude)],
-            radiusInRadians,
-          ],
-        },
-      },
+    if (!networks.length) {
+      return res.status(404).json({ message: "No networks found" });
+    }
+
+    // Find networks where the user is within the network's radius
+    const userWithinNetworks = networks.filter((network) => {
+      const distance = calculateDistance(
+        userLat,
+        userLng,
+        network.coordinates.coordinates[1],
+        network.coordinates.coordinates[0]
+      );
+
+      return distance <= network.radius; // Check if user is within the network's radius
     });
 
-    // Return the networks as a response
-    return res.json(networks);
+    if (!userWithinNetworks.length) {
+      return res
+        .status(404)
+        .json({ message: "No networks found within range" });
+    }
+
+    return res.json(userWithinNetworks);
   } catch (error) {
     console.error("Error finding nearby networks:", error);
     return res.status(500).json({ message: "Error finding nearby networks" });

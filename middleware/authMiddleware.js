@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const protect = (req, res, next) => {
   let token;
-  //console.log(req.headers.authorization.startsWith("Bearer "));
+  // console.log(req.headers.authorization);
 
   if (
     req.headers.authorization &&
@@ -9,16 +9,8 @@ const protect = (req, res, next) => {
   ) {
     try {
       token = req.headers.authorization.split(" ")[1];
-      // console.log(process.env.SecretKey)
-      const decodedWithoutVerify = jwt.decode(token);
-      console.log(
-        "Decoded token without verification:",
-        decodedWithoutVerify.userId
-      );
-
-      // const decoded = jwt.verify(token, process.env.SecretKey);
-      // console.log(decodedWithoutVerify.userId)
-      req.userId = decodedWithoutVerify.userId;
+      const decoded = jwt.verify(token, process.env.SecretKey);
+      req.userId = decoded.userId;
       next();
     } catch (error) {
       res.status(401).json({ message: "Not authorized, token failed" });

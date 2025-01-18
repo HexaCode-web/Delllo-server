@@ -91,6 +91,10 @@ const networkSchema = new mongoose.Schema(
         },
       },
     ],
+    radius: {
+      type: Number,
+      required: true,
+    },
   },
   { timestamps: true }
 );
