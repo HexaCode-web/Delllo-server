@@ -515,6 +515,44 @@ const updateProfile = async (req, res) => {
     });
   }
 };
+const updateLocation = async (req, res) => {
+  try {
+    const { Id } = req.params; // Assuming `userId` is attached to `req` via middleware
+    const { longitude, latitude } = req.body; // Extracting only longitude and latitude from the request body
+
+    // Validate inputs
+    if (!Id || longitude === undefined || latitude === undefined) {
+      return res.status(400).json({
+        message: "Invalid request: Missing userId, longitude, or latitude",
+      });
+    }
+
+    // Find the user and update only the longitude and latitude
+    const user = await User.findByIdAndUpdate(
+      Id,
+      { longitude, latitude }, // Only update these fields
+      {
+        new: true, // Return the updated document
+        runValidators: true, // Ensure schema validation is applied to updated data
+      }
+    );
+
+    // Check if the user was found
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Return the updated user with the new location
+    res.status(200).json({ message: "Location updated successfully", user });
+  } catch (error) {
+    console.error("Error updating location:", error);
+    res.status(500).json({
+      message: "An error occurred while updating the location",
+      error: error.message,
+    });
+  }
+};
+
 const changePassword = async (req, res) => {
   const { userId } = req;
 
@@ -690,4 +728,5 @@ module.exports = {
   addAssociatedEmail,
   addAssociatedEmailLogic,
   changePassword,
+  updateLocation,
 };

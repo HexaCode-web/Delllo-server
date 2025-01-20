@@ -1,6 +1,7 @@
 const User = require("../models/User.model");
 const jwt = require("jsonwebtoken");
 const OTP = require("../models/OTP.model");
+
 const registerUser = async (req, res) => {
   const {
     FirstName,
