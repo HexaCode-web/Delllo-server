@@ -11,7 +11,7 @@ const {
 const router = express.Router();
 router.get("/:orgId", protect, getOrgById);
 router.post("/add", protect, registerOrganization);
-router.put("/addAdmin", protect, addAdmin);
+router.post("/addAdmin", protect, addAdmin);
 router.put("/update/:OrgId", protect, updateOrganization);
 router.delete("/removeAdmin", protect, removeAdmin);
 router.delete("/delete/:OrgId", protect, deleteOrganization);

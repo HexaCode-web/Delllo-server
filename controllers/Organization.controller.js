@@ -82,7 +82,8 @@ const registerOrganization = async (req, res) => {
         error: apiError.message,
       });
     }
-    res.status(201).json({ organization }); // Return created organization
+    const user = await User.findById(userId);
+    res.status(201).json({ organization, user }); // Return created organization
   } catch (error) {
     res.status(500).json({
       message: "Error registering organization",
@@ -146,6 +147,7 @@ const addAdmin = async (req, res) => {
 
     const organization = await Organization.findOne({ domain });
     const invitedUser = await User.findById(id);
+
     if (!organization || !invitedUser) {
       return res
         .status(400)
@@ -153,7 +155,7 @@ const addAdmin = async (req, res) => {
     }
 
     // Check if the email is already an admin
-    if (organization.admins.includes(email)) {
+    if (organization.admins.some((admin) => admin.Email === email)) {
       return res.status(400).json({ message: "Email is already an admin" });
     }
 
@@ -264,22 +266,28 @@ const addAdmin = async (req, res) => {
       method: "POST",
       headers: {
         accept: "application/json",
-        // eslint-disable-next-line no-undef
         "api-key": process.env.MailKey,
         "content-type": "application/json",
       },
       body: JSON.stringify(emailData),
     };
+
     try {
       const response = await fetch(
         "https://api.brevo.com/v3/smtp/email",
         requestOptions
       );
+      console.log("Brevo API Response:", response);
+
       if (!response.ok) {
+        console.log(
+          `Email sending failed with status: ${response.status} ${response.message}`
+        );
         throw new Error(
           `Email sending failed with status: ${response.status} ${response.message}`
         );
       }
+
       // Save the updated organization
       await organization.save();
 
@@ -288,9 +296,11 @@ const addAdmin = async (req, res) => {
         .status(200)
         .json({ message: "Admin added successfully", organization });
     } catch (error) {
+      console.error("Error in email sending:", error);
       return res.status(500).json({ message: error.message });
     }
   } catch (error) {
+    console.error("Error adding admin to the organization:", error);
     res.status(500).json({
       message: "Error adding admin to the organization",
       error: error.message,

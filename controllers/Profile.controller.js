@@ -647,13 +647,28 @@ const addAssociatedEmailLogic = async (userId, email) => {
     }
 
     // If email is already associated with the user, return error message
-    if (user.associatedEmails.includes(email)) {
-      return {
-        status: 400,
-        message: "Email is already associated with this user.",
-      };
-    }
+    const existingEmailEntry = user.associatedEmails.find(
+      (associatedEmail) => associatedEmail.email === email
+    );
 
+    if (existingEmailEntry) {
+      // If the email is already associated, check the OrgId
+      if (existingEmailEntry.OrgId === "") {
+        // If OrgId is empty, update it with the new value
+        existingEmailEntry.OrgId = organization._id;
+        await user.save();
+        return {
+          status: 200,
+          message: "Email association updated successfully.",
+        };
+      } else {
+        // If OrgId is not empty, return an error
+        return {
+          status: 400,
+          message: "Email is already associated with another organization.",
+        };
+      }
+    }
     // Check if the admin entry exists and if the invite is valid
     const adminEntry = organization.admins.find(
       (admin) => admin.Email === email
@@ -687,6 +702,39 @@ const addAssociatedEmailLogic = async (userId, email) => {
   } catch (error) {
     // Return error object with status and message
     throw new Error("Error associating email: " + error.message);
+  }
+};
+const getUsersByDomain = async (req, res) => {
+  try {
+    const { domain } = req.params; // Get the domain from query parameters
+
+    // Validate the domain input
+    if (!domain) {
+      return res.status(400).json({
+        message: "Domain is required in the query parameters.",
+      });
+    }
+
+    // Use MongoDB's $regex to find users with associated emails containing the domain
+    const users = await User.find({
+      associatedEmails: {
+        $elemMatch: {
+          email: { $regex: `@${domain}$`, $options: "i" }, // Match emails ending with the domain
+        },
+      },
+    });
+
+    // Return the filtered users
+    res.status(200).json({
+      message: "Users retrieved successfully.",
+      users,
+    });
+  } catch (error) {
+    console.error("Error fetching users by domain:", error);
+    res.status(500).json({
+      message: "An error occurred while fetching users.",
+      error: error.message,
+    });
   }
 };
 const getProfileById = async (req, res) => {
@@ -729,4 +777,5 @@ module.exports = {
   addAssociatedEmailLogic,
   changePassword,
   updateLocation,
+  getUsersByDomain,
 };

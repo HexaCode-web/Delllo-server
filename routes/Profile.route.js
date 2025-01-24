@@ -25,6 +25,7 @@ const {
   getProfileById,
   changePassword,
   updateLocation,
+  getUsersByDomain,
 } = require("../controllers/Profile.controller");
 const router = express.Router();
 
@@ -60,4 +61,5 @@ router.patch("/updateLocation/:Id", protect, updateLocation);
 router.put("/updatePassword/:Id", protect, changePassword);
 router.get("/addAssociatedEmail/:userId/:email", addAssociatedEmail);
 router.get("/:id", getProfileById);
+router.get("/GetByDomain/:domain", getUsersByDomain);
 module.exports = router;

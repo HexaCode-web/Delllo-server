@@ -159,7 +159,7 @@ const getMeetRequestsForUser = async (req, res) => {
     });
 
     if (!meetingRequests.length) {
-      return res.status(404).json({
+      return res.status(200).json({
         message: "No meeting requests found for this user in the network",
       });
     }
