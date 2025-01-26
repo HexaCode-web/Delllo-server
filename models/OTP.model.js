@@ -13,39 +13,42 @@ const counterSchema = new mongoose.Schema({
 
 const Counter = mongoose.model("Counter", counterSchema);
 
-const otpSchema = new mongoose.Schema({
-  id: {
-    type: Number,
-    unique: true,
-  },
-  contactInfo: {
-    type: String,
-    required: true,
-    validate: {
-      validator: function (v) {
-        return /^\S+@\S+\.\S+$/.test(v); // Validates email format
+const otpSchema = new mongoose.Schema(
+  {
+    id: {
+      type: Number,
+      unique: true,
+    },
+    contactInfo: {
+      type: String,
+      required: true,
+      validate: {
+        validator: function (v) {
+          return /^\S+@\S+\.\S+$/.test(v); // Validates email format
+        },
+        message: (props) => `${props.value} is not a valid email!`,
       },
-      message: (props) => `${props.value} is not a valid email!`,
+    },
+    code: {
+      type: String,
+      required: true,
+      length: 6, // Ensures the OTP is always 6 digits
+    },
+    createdAt: {
+      type: Date,
+      required: true,
+      default: Date.now, // Automatically sets the current date/time
+    },
+    expireAt: {
+      type: Date,
+    },
+    verified: {
+      type: Boolean,
+      default: false,
     },
   },
-  code: {
-    type: String,
-    required: true,
-    length: 6, // Ensures the OTP is always 6 digits
-  },
-  createdAt: {
-    type: Date,
-    required: true,
-    default: Date.now, // Automatically sets the current date/time
-  },
-  expireAt: {
-    type: Date,
-  },
-  verified: {
-    type: Boolean,
-    default: false,
-  },
-});
+  { timestamps: true }
+);
 
 // Pre-save middleware to calculate `expireAt` 10 minutes from `createdAt`
 otpSchema.pre("save", async function (next) {

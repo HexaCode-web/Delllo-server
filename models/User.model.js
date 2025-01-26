@@ -148,7 +148,7 @@ const userSchema = mongoose.Schema(
     },
     presentRole: { type: presentRoleSchema, default: {}, require: false },
   },
-  { Timestamp: true }
+  { timestamps: true }
 );
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next(); // If password is not modified, skip this step

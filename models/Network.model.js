@@ -89,6 +89,14 @@ const networkSchema = new mongoose.Schema(
           ref: "User", // Reference to the User model, store ObjectId
           required: true,
         },
+        Active: {
+          type: Boolean,
+          default: true, // Default to true when a user is accepted
+        },
+        ManualInActive: {
+          type: Boolean,
+          default: false, // Default to false when a user is accepted
+        },
       },
     ],
     radius: {

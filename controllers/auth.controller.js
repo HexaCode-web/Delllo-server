@@ -189,7 +189,7 @@ const sendOTP = async (req, res) => {
       "https://api.brevo.com/v3/smtp/email",
       requestOptions
     );
-
+    console.log(response);
     if (!response.ok) {
       throw new Error(
         `Email sending failed with status: ${response.status} ${response.message}`

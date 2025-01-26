@@ -11,6 +11,7 @@ const networkRoutes = require("./routes/Network.route.js");
 const MeetRoutes = require("./routes/Meet.route.js");
 const corsOptions = require("./middleware/corsOptions.js");
 const cors = require("cors");
+const checkForActive = require("./functions/checkForActive.js");
 
 const mongoDB = process.env.DB;
 app.use(express.json());
@@ -31,6 +32,8 @@ mongoose
     () => console.log("MongoDB connected"),
     app.listen(port, () => {
       console.log(`app listening on port ${port}, DB is connected`);
+
+      setInterval(checkForActive, 12000);
     })
   )
   .catch((err) => console.error("MongoDB connection error:", err));
