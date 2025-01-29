@@ -629,7 +629,25 @@ const addAssociatedEmail = async (req, res) => {
     res.status(500).send("Internal Server Error: " + error.message);
   }
 };
+const manualAddWorkEmail = async (req, res) => {
+  try {
+    const { userId } = req;
+    const { associatedEmail } = req.body;
 
+    if (!userId || !associatedEmail) {
+      return res.status(400).json({ message: "Invalid request" });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $push: { associatedEmails: associatedEmail } },
+      { new: true }
+    );
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 const addAssociatedEmailLogic = async (userId, email) => {
   try {
     // Find user and organization by their respective IDs or email
@@ -778,4 +796,5 @@ module.exports = {
   changePassword,
   updateLocation,
   getUsersByDomain,
+  manualAddWorkEmail,
 };

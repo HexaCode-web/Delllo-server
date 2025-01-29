@@ -10,6 +10,7 @@ const {
   getNetwork,
   getNearbyNetworks,
   dismissRequest,
+  changeUserActivity,
 } = require("../controllers/Network.controller");
 
 const router = express.Router();
@@ -23,5 +24,6 @@ router.put("/JoinRequest/:networkId/:userId", protect, JoinRequest);
 router.put("/ApproveRequest/:networkId/:userId", protect, approveRequest);
 router.put("/RejectRequest/:networkId/:userId", protect, rejectRequest);
 router.put("/DismissNetwork/:networkId/:userId", protect, dismissRequest);
+router.put("/ToggleActivity/:networkId/:userId", protect, changeUserActivity);
 
 module.exports = router;

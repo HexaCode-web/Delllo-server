@@ -361,6 +361,36 @@ const dismissRequest = async (req, res) => {
     return res.status(500).json({ message: "Server Error" });
   }
 };
+const changeUserActivity = async (req, res) => {
+  const { networkId, userId } = req.params;
+  const { isActive } = req.body; // Get from request body
+
+  try {
+    const network = await Network.findById(networkId);
+    if (!network) {
+      return res.status(404).json({ message: "Network not found" });
+    }
+
+    const userIndex = network.Accepted.findIndex(
+      (user) => user.userId.toString() === userId
+    );
+
+    if (userIndex === -1) {
+      return res.status(404).json({ message: "User not found in the network" });
+    }
+
+    network.Accepted[userIndex].ManualInActive = !isActive; // Use `isActive` from body
+    const updatedNetwork = await network.save();
+
+    return res.status(200).json({
+      message: "User activity updated successfully",
+      network: updatedNetwork,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
 
 module.exports = {
   createNetwork,
@@ -372,4 +402,5 @@ module.exports = {
   rejectRequest,
   getNearbyNetworks,
   dismissRequest,
+  changeUserActivity,
 };

@@ -21,6 +21,7 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
 
 // Main function
 const checkForActive = async () => {
+  console.time("checkForActive"); // Start timer
   console.log("Checking for active users...");
   try {
     // Fetch all networks
@@ -103,6 +104,7 @@ const checkForActive = async () => {
   } catch (error) {
     console.error("Error in checkForActive function:", error);
   }
+  console.timeEnd("checkForActive"); // End timer
 };
 
 // Export the function

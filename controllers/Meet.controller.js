@@ -111,7 +111,7 @@ const getMeetingRequest = async (req, res) => {
   const { userIDA, userIDB, networkID } = req.query;
 
   // Validate request query parameters
-  if (!userIDA || !userIDB || !networkID) {
+  if (!userIDA || !userIDB) {
     return res
       .status(400)
       .json({ message: "Please provide userIDA, userIDB, and networkID" });
@@ -120,7 +120,6 @@ const getMeetingRequest = async (req, res) => {
   try {
     // Query for meeting request where both users are in the same network
     const meetingRequest = await MeetRequest.findOne({
-      networkID,
       meetResponse: { $in: ["waiting", "accepted"] },
 
       $or: [
