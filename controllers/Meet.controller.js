@@ -1,6 +1,7 @@
 const MeetRequest = require("../models/MeetRequest.model");
+const Notification = require("../models/Notification.model");
 const createMeetRequest = async (req, res) => {
-  const { networkID, userIDA, userIDB, purpose } = req.body;
+  const { networkID, userIDA, userIDB, purpose, senderName } = req.body;
 
   // Validate request body
   if (!networkID || !userIDA || !userIDB || !purpose) {
@@ -35,7 +36,32 @@ const createMeetRequest = async (req, res) => {
 
     // Save the request to the database
     await meetRequest.save();
-
+    if (global.activeUsers.has(userIDB)) {
+      const userSocket = global.activeUsers.get(userIDB);
+      req.io.to(userSocket).emit("newNotification", {
+        type: "meet_request",
+        senderID: userIDA,
+        senderName,
+        message: `User ${senderName} wants to meet you for: ${purpose}`,
+        requestId: meetRequest._id,
+      });
+      await Notification.create({
+        userId: userIDB,
+        senderID: userIDA,
+        senderName,
+        message: `User ${senderName} wants to meet you for: ${purpose}`,
+        seen: true,
+        requestId: meetRequest._id,
+      });
+    } else {
+      await Notification.create({
+        userId: userIDB,
+        senderID: userIDA,
+        senderName,
+        message: `User ${senderName} wants to meet you for: ${purpose}`,
+        requestId: meetRequest._id,
+      });
+    }
     res.status(201).json({
       message: "Meeting request created successfully",
       data: meetRequest,

@@ -9,33 +9,52 @@ const profileRoutes = require("./routes/Profile.route.js");
 const organizationRoutes = require("./routes/Organization.route.js");
 const networkRoutes = require("./routes/Network.route.js");
 const MeetRoutes = require("./routes/Meet.route.js");
+const NotificationRoutes = require("./routes/Notification.route.js");
 const corsOptions = require("./middleware/corsOptions.js");
 const cors = require("cors");
 const checkForActive = require("./functions/checkForActive.js");
+const http = require("http");
+
+// Import the Socket.IO module
+const initializeSocket = require("./sockets/SocketManager.js");
 
 const mongoDB = process.env.DB;
+
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(cors(corsOptions));
 
-//routes
+// Create an HTTP server
+const server = http.createServer(app);
+
+// Initialize Socket.IO
+const io = initializeSocket(server);
+
+// Attach io instance to req
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/organization", organizationRoutes);
 app.use("/api/network", networkRoutes);
 app.use("/api/meet", MeetRoutes);
-
+app.use("/api/notifications", NotificationRoutes);
+// Connect to MongoDB and start the server
 mongoose
   .connect(mongoDB)
-  .then(
-    () => console.log("MongoDB connected"),
-    app.listen(port, () => {
-      console.log(`app listening on port ${port}, DB is connected`);
-
+  .then(() => {
+    console.log("MongoDB connected");
+    server.listen(port, () => {
+      console.log(`Server listening on port ${port}, DB is connected`);
       setInterval(checkForActive, 12000);
-    })
-  )
+    });
+  })
   .catch((err) => console.error("MongoDB connection error:", err));
 
 mongoose.connection.on("error", (err) => {
