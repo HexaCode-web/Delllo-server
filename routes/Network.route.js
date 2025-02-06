@@ -11,15 +11,16 @@ const {
   getNearbyNetworks,
   dismissRequest,
   changeUserActivity,
+  editNetwork,
 } = require("../controllers/Network.controller");
 
 const router = express.Router();
 router.get("/getNetwork/:networkId", getNetwork);
 router.get("/nearby", getNearbyNetworks);
 router.get("/getOrgNetworks/:orgId", getOrgNetwork);
-router.delete("/deleteNetwork/:networkId", protect, deleteNetwork);
+router.patch("/deleteNetwork/:networkId", protect, deleteNetwork);
 router.post("/addNetwork", protect, createNetwork);
-
+router.patch("/updateNetwork/:networkId", protect, editNetwork);
 router.put("/JoinRequest/:networkId/:userId", protect, JoinRequest);
 router.put("/ApproveRequest/:networkId/:userId", protect, approveRequest);
 router.put("/RejectRequest/:networkId/:userId", protect, rejectRequest);

@@ -180,7 +180,7 @@ const getMeetRequestsForUser = async (req, res) => {
     const meetingRequests = await MeetRequest.find({
       userIDB: userIDB.trim(),
       networkID: networkID.trim(),
-      meetResponse: "waiting", // Only include 'waiting' responses
+      meetResponse: ["waiting", "accepted"], // Only include 'waiting' responses
     });
 
     if (!meetingRequests.length) {

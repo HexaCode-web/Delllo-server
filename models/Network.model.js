@@ -27,7 +27,11 @@ const networkSchema = new mongoose.Schema(
       type: Date,
       required: false,
     },
-
+    type: {
+      type: String,
+      required: true,
+      enum: ["Public", "Private"],
+    },
     size: {
       type: Number,
       required: true,
@@ -102,6 +106,10 @@ const networkSchema = new mongoose.Schema(
     radius: {
       type: Number,
       required: true,
+    },
+    Deleted: {
+      type: Boolean,
+      default: false, // Default to true when a user is accepted
     },
   },
   { timestamps: true }

@@ -149,7 +149,41 @@ const getNearbyNetworks = async (req, res) => {
     return res.status(500).json({ message: "Error finding nearby networks" });
   }
 };
+const editNetwork = async (req, res) => {
+  try {
+    const { networkId } = req.params;
+    const { updatedNetwork } = req.body;
+    if (!networkId || !updatedNetwork) {
+      return res.status(400).json({
+        message: "Invalid request: Missing networkId or updatedNetwork",
+      });
+    }
 
+    const updatedNetworkResult = await Network.findByIdAndUpdate(
+      networkId,
+      updatedNetwork,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!updatedNetworkResult) {
+      return res.status(404).json({ message: "Network not found" });
+    }
+
+    res.status(200).json({
+      message: "Network updated successfully",
+      data: updatedNetworkResult,
+    });
+  } catch (error) {
+    console.error("Error updating Network:", error);
+    res.status(500).json({
+      message: "An error occurred while updating the Network",
+      error: error.message,
+    });
+  }
+};
 const getNetwork = async (req, res) => {
   const { networkId } = req.params;
   try {
@@ -179,7 +213,9 @@ const getOrgNetwork = async (req, res) => {
 const deleteNetwork = async (req, res) => {
   const { networkId } = req.params;
   try {
-    const network = await Network.findByIdAndDelete(networkId);
+    const network = await Network.findByIdAndUpdate(networkId, {
+      $set: { Deleted: true },
+    });
     if (!network) {
       return res.status(404).json({ message: "Network not found" });
     }
@@ -403,4 +439,5 @@ module.exports = {
   getNearbyNetworks,
   dismissRequest,
   changeUserActivity,
+  editNetwork,
 };
