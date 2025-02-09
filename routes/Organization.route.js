@@ -13,6 +13,6 @@ router.get("/:orgId", protect, getOrgById);
 router.post("/add", protect, registerOrganization);
 router.post("/addAdmin", protect, addAdmin);
 router.put("/update/:OrgId", protect, updateOrganization);
-router.delete("/removeAdmin", protect, removeAdmin);
+router.delete("/removeAdmin/:email", protect, removeAdmin);
 router.delete("/delete/:OrgId", protect, deleteOrganization);
 module.exports = router;

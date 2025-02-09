@@ -648,6 +648,31 @@ const manualAddWorkEmail = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+const deleteWorkEmail = async (req, res) => {
+  try {
+    const { userId } = req;
+    const { workEmailId } = req.body;
+
+    if (!userId || !workEmailId) {
+      return res.status(400).json({ message: "Invalid request" });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $pull: { associatedEmails: { _id: workEmailId } } },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "Work Email removed successfully", user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
 const addAssociatedEmailLogic = async (userId, email) => {
   try {
     // Find user and organization by their respective IDs or email
@@ -769,6 +794,22 @@ const getProfileById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+const deleteUser = async (req, res) => {
+  try {
+    const { userId } = req;
+
+    if (!userId) {
+      return res.status(400).json({ message: "Invalid request" });
+    }
+
+    await User.findByIdAndDelete(userId);
+
+    res.status(200).json({ message: "User removed successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
 module.exports = {
   addSkill,
   deleteSkill,
@@ -797,4 +838,6 @@ module.exports = {
   updateLocation,
   getUsersByDomain,
   manualAddWorkEmail,
+  deleteUser,
+  deleteWorkEmail,
 };

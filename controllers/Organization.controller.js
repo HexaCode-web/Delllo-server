@@ -1,6 +1,6 @@
 const Organization = require("../models/Organization.model");
 const OTP = require("../models/OTP.model");
-
+const Network = require("../models/Network.model");
 const User = require("../models/User.model");
 const { addAssociatedEmailLogic } = require("./Profile.controller");
 const getOrgById = async (req, res) => {
@@ -124,11 +124,17 @@ const deleteOrganization = async (req, res) => {
 
   try {
     // Check if the organization exists
+
+    await Network.deleteMany({ orgId: OrgId });
+    await User.updateMany(
+      { "associatedEmails.OrgId": OrgId }, // Filter: Find users with the specified orgId
+      { $set: { "associatedEmails.$[elem].OrgId": "" } }, // Update: Set OrgId to an empty string
+      { arrayFilters: [{ "elem.OrgId": OrgId }] } // Specify which array elements to update
+    );
     const organization = await Organization.findByIdAndDelete(OrgId);
     if (!organization) {
       return res.status(400).json({ message: "Organization doesn't exist" });
     }
-
     res.status(200).json({ message: "Organization deleted successfully" });
   } catch (error) {
     res.status(500).json({
@@ -308,9 +314,12 @@ const addAdmin = async (req, res) => {
   }
 };
 const removeAdmin = async (req, res) => {
-  const { email } = req.body;
-  const removedUser = await User.findOne({ email: email });
-
+  const { email } = req.params;
+  const removedUser = await User.findOne({
+    associatedEmails: {
+      $elemMatch: { email: email },
+    },
+  });
   try {
     const domain = extractDomainFromEmail(email);
 
@@ -318,12 +327,15 @@ const removeAdmin = async (req, res) => {
     const organization = await Organization.findOne({ domain });
 
     if (!organization) {
-      return res.status(400).json({ message: "Organization doesn't exist" });
-    }
-    if (organization.admins.length == 1) {
       return res
         .status(400)
-        .json({ message: "Organization must have at least one admin" });
+        .json({ message: "Organization doesn't exist", organization });
+    }
+    if (organization.admins.length == 1) {
+      return res.status(400).json({
+        message: "Organization must have at least one admin",
+        organization,
+      });
     }
     // Check if the email is in the admins array
     const adminIndex = organization.admins.findIndex(
@@ -334,7 +346,9 @@ const removeAdmin = async (req, res) => {
     );
 
     if (adminIndex === -1) {
-      return res.status(400).json({ message: "Email is not an admin" });
+      return res
+        .status(400)
+        .json({ message: "Email is not an admin", organization });
     }
 
     // Remove the admin from the admins array
@@ -351,6 +365,8 @@ const removeAdmin = async (req, res) => {
       .status(200)
       .json({ message: "Admin removed successfully", organization });
   } catch (error) {
+    console.log(error);
+
     res.status(500).json({
       message: "Error removing admin from the organization",
       error: error.message,

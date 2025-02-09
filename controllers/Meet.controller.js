@@ -134,7 +134,7 @@ const rejectMeetRequest = async (req, res) => {
 };
 
 const getMeetingRequest = async (req, res) => {
-  const { userIDA, userIDB, networkID } = req.query;
+  const { userIDA, userIDB } = req.query;
 
   // Validate request query parameters
   if (!userIDA || !userIDB) {
@@ -168,9 +168,9 @@ const getMeetingRequest = async (req, res) => {
   }
 };
 const getMeetRequestsForUser = async (req, res) => {
-  const { userIDB, networkID } = req.params;
+  const { user, networkID } = req.params;
 
-  if (!userIDB || !networkID) {
+  if (!user || !networkID) {
     return res.status(400).json({
       message: "Please provide userIDB and networkID",
     });
@@ -178,11 +178,41 @@ const getMeetRequestsForUser = async (req, res) => {
 
   try {
     const meetingRequests = await MeetRequest.find({
-      userIDB: userIDB.trim(),
+      $or: [{ userIDA: user.trim() }, { userIDB: user.trim() }],
       networkID: networkID.trim(),
-      meetResponse: ["waiting", "accepted"], // Only include 'waiting' responses
+      meetResponse: "waiting",
     });
+    console.log(meetingRequests);
 
+    if (!meetingRequests.length) {
+      return res.status(200).json({
+        message: "No meeting requests found for this user in the network",
+      });
+    }
+
+    res.status(200).json({
+      message: "Meeting requests retrieved successfully",
+      data: meetingRequests,
+    });
+  } catch (error) {
+    console.error("Error fetching meeting requests:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+const getAcceptedMeetRequestsForUser = async (req, res) => {
+  const { user } = req.params;
+
+  if (!user) {
+    return res.status(400).json({
+      message: "Please provide userIDB and networkID",
+    });
+  }
+
+  try {
+    const meetingRequests = await MeetRequest.find({
+      $or: [{ userIDA: user.trim() }, { userIDB: user.trim() }],
+      meetResponse: "accepted",
+    });
     if (!meetingRequests.length) {
       return res.status(200).json({
         message: "No meeting requests found for this user in the network",
@@ -204,4 +234,5 @@ module.exports = {
   getMeetingRequest,
   rejectMeetRequest,
   getMeetRequestsForUser,
+  getAcceptedMeetRequestsForUser,
 };
