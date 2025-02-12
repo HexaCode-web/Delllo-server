@@ -111,6 +111,10 @@ const networkSchema = new mongoose.Schema(
       type: Boolean,
       default: false, // Default to true when a user is accepted
     },
+    OnlyProfEmails: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

@@ -1,6 +1,7 @@
 const User = require("../models/User.model");
 const jwt = require("jsonwebtoken");
 const OTP = require("../models/OTP.model");
+const nodemailer = require("nodemailer");
 
 const registerUser = async (req, res) => {
   const {
@@ -87,7 +88,19 @@ const loginUser = async (req, res) => {
     res.status(500).json({ message: "Error while trying to login", error });
   }
 };
-
+const transporter = nodemailer.createTransport({
+  host: "mail.harptec.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: "delllootp@harptec.com",
+    pass: "admin123",
+  },
+  tls: {
+    rejectUnauthorized: false,
+    ciphers: "SSLv3",
+  },
+});
 const sendOTP = async (req, res) => {
   const { email } = req.body;
 
@@ -137,30 +150,11 @@ const sendOTP = async (req, res) => {
 
   const emailHtml = getEmailHTML(generatedOTP);
 
-  // Email data
-  const emailData = {
-    sender: {
-      name: "delllootp",
-      email: "delllootp@noreply.com",
-    },
-    to: [
-      {
-        email: email,
-      },
-    ],
+  const mailOptions = {
+    from: "delllootp@harptec.com",
+    to: email,
     subject: "Delllo OTP",
-    htmlContent: emailHtml,
-  };
-
-  // Request options for sending email
-  const requestOptions = {
-    method: "POST",
-    headers: {
-      accept: "application/json",
-      "api-key": process.env.MailKey,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(emailData),
+    html: emailHtml,
   };
 
   try {
@@ -185,16 +179,13 @@ const sendOTP = async (req, res) => {
     }
 
     // Send the OTP email
-    const response = await fetch(
-      "https://api.brevo.com/v3/smtp/email",
-      requestOptions
-    );
-    console.log(response);
-    if (!response.ok) {
-      throw new Error(
-        `Email sending failed with status: ${response.status} ${response.message}`
-      );
-    }
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log("Error: ", error);
+      } else {
+        console.log("Email sent: ", info.response);
+      }
+    });
 
     // Respond to the client
     res.status(200).json({ message: "OTP sent successfully" });

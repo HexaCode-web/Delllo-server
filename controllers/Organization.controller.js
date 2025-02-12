@@ -3,6 +3,8 @@ const OTP = require("../models/OTP.model");
 const Network = require("../models/Network.model");
 const User = require("../models/User.model");
 const { addAssociatedEmailLogic } = require("./Profile.controller");
+const nodemailer = require("nodemailer");
+
 const getOrgById = async (req, res) => {
   const { orgId } = req.params;
 
@@ -123,8 +125,6 @@ const deleteOrganization = async (req, res) => {
   const { OrgId } = req.params;
 
   try {
-    // Check if the organization exists
-
     await Network.deleteMany({ orgId: OrgId });
     await User.updateMany(
       { "associatedEmails.OrgId": OrgId }, // Filter: Find users with the specified orgId
@@ -168,7 +168,19 @@ const addAdmin = async (req, res) => {
     // Add the email to the organization's admins array
     organization.admins.push({ Email: email, acceptedInvite: false });
     const inviteLink = `https://delllo.harptec.com/api/profile/addAssociatedEmail/${invitedUser.id}/${email}`;
-
+    const transporter = nodemailer.createTransport({
+      host: "mail.harptec.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: "delllootp@harptec.com",
+        pass: "admin123",
+      },
+      tls: {
+        rejectUnauthorized: false,
+        ciphers: "SSLv3",
+      },
+    });
     const getEmailHTML = (organizationName, inviteLink) => {
       return `
         <!DOCTYPE html>
@@ -253,46 +265,21 @@ const addAdmin = async (req, res) => {
     };
 
     const emailHtml = getEmailHTML(domain, inviteLink);
-
-    const emailData = {
-      sender: {
-        name: "Dello",
-        email: "delllo@noreply.com",
-      },
-      to: [
-        {
-          email: email,
-        },
-      ],
+    const mailOptions = {
+      from: "delllo@harptec.com",
+      to: email,
       subject: "Organization invite request",
-      htmlContent: emailHtml,
-    };
-
-    const requestOptions = {
-      method: "POST",
-      headers: {
-        accept: "application/json",
-        "api-key": process.env.MailKey,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(emailData),
+      html: emailHtml,
     };
 
     try {
-      const response = await fetch(
-        "https://api.brevo.com/v3/smtp/email",
-        requestOptions
-      );
-      console.log("Brevo API Response:", response);
-
-      if (!response.ok) {
-        console.log(
-          `Email sending failed with status: ${response.status} ${response.message}`
-        );
-        throw new Error(
-          `Email sending failed with status: ${response.status} ${response.message}`
-        );
-      }
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log("Error: ", error);
+        } else {
+          console.log("Email sent: ", info.response);
+        }
+      });
 
       // Save the updated organization
       await organization.save();

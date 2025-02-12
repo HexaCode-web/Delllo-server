@@ -13,6 +13,7 @@ const createNetwork = async (req, res) => {
     latitude,
     longitude,
     radius,
+    OnlyProfEmails,
   } = req.body;
 
   // Validate request fields
@@ -37,11 +38,17 @@ const createNetwork = async (req, res) => {
     // Parse latitude and longitude as floats
     const lat = parseFloat(latitude);
     const lng = parseFloat(longitude);
-
     if (isNaN(lat) || isNaN(lng)) {
       return res.status(400).json({ message: "Invalid coordinates" });
     }
+    const existingNetwork = await Network.findOne({ name, orgId });
 
+    if (existingNetwork) {
+      return res.status(409).json({
+        message:
+          "Network with the same name and organization ID already exists",
+      });
+    }
     // Create a new network
     const network = new Network({
       name,
@@ -52,11 +59,13 @@ const createNetwork = async (req, res) => {
       adminId,
       type,
       radius,
+      Admins: [{ userId: adminId }],
       Accepted: [{ userId: adminId }],
       coordinates: {
         type: "Point",
         coordinates: [lng, lat], // GeoJSON format [longitude, latitude]
       },
+      OnlyProfEmails,
     });
 
     // Save the network
