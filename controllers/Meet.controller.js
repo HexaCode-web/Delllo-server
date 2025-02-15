@@ -38,28 +38,42 @@ const createMeetRequest = async (req, res) => {
     await meetRequest.save();
     if (global.activeUsers.has(userIDB)) {
       const userSocket = global.activeUsers.get(userIDB);
+
+      // Emit real-time notification
       req.io.to(userSocket).emit("newNotification", {
-        type: "meet_request",
-        senderID: userIDA,
-        senderName,
+        type: "meet Request", // Use the enum value from the schema
         message: `User ${senderName} wants to meet you for: ${purpose}`,
-        requestId: meetRequest._id,
+        metadata: {
+          senderID: userIDA, // Store senderID in metadata
+          senderName, // Store senderName in metadata
+          requestId: meetRequest._id, // Store requestId in metadata
+        },
       });
+
+      // Create notification in the database
       await Notification.create({
         userId: userIDB,
-        senderID: userIDA,
-        senderName,
+        type: "meet Request", // Use the enum value from the schema
         message: `User ${senderName} wants to meet you for: ${purpose}`,
-        seen: true,
-        requestId: meetRequest._id,
+        metadata: {
+          senderID: userIDA, // Store senderID in metadata
+          senderName, // Store senderName in metadata
+          requestId: meetRequest._id, // Store requestId in metadata
+        },
+        seen: false, // Default is false, but you can set it to true if needed
       });
     } else {
+      // Create notification in the database (no real-time update)
       await Notification.create({
         userId: userIDB,
-        senderID: userIDA,
-        senderName,
+        type: "meet Request", // Use the enum value from the schema
         message: `User ${senderName} wants to meet you for: ${purpose}`,
-        requestId: meetRequest._id,
+        metadata: {
+          senderID: userIDA, // Store senderID in metadata
+          senderName, // Store senderName in metadata
+          requestId: meetRequest._id, // Store requestId in metadata
+        },
+        seen: false, // Default is false
       });
     }
     res.status(201).json({

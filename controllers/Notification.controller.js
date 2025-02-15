@@ -18,5 +18,23 @@ const GetNotifications = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+const markAllAsSeen = async (req, res) => {
+  try {
+    const { userId } = req.params;
 
-module.exports = { GetNotifications };
+    // Mark all notifications for the user as seen
+    await Notification.updateMany(
+      { userId, seen: false }, // Only update unseen notifications
+      { $set: { seen: true } }
+    );
+
+    res.json({ success: true, message: "All notifications marked as seen" });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error marking notifications as seen",
+      error: error.message,
+    });
+  }
+};
+module.exports = { GetNotifications, markAllAsSeen };

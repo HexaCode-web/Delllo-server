@@ -12,6 +12,7 @@ const {
   dismissRequest,
   changeUserActivity,
   editNetwork,
+  removeUser,
 } = require("../controllers/Network.controller");
 
 const router = express.Router();
@@ -26,5 +27,6 @@ router.put("/ApproveRequest/:networkId/:userId", protect, approveRequest);
 router.put("/RejectRequest/:networkId/:userId", protect, rejectRequest);
 router.put("/DismissNetwork/:networkId/:userId", protect, dismissRequest);
 router.put("/ToggleActivity/:networkId/:userId", protect, changeUserActivity);
+router.put("/RemoveUser/:networkId/:userId", protect, removeUser);
 
 module.exports = router;

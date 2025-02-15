@@ -4,6 +4,7 @@ const Network = require("../models/Network.model");
 const User = require("../models/User.model");
 const { addAssociatedEmailLogic } = require("./Profile.controller");
 const nodemailer = require("nodemailer");
+const Notification = require("../models/Notification.model");
 
 const getOrgById = async (req, res) => {
   const { orgId } = req.params;
@@ -283,11 +284,34 @@ const addAdmin = async (req, res) => {
 
       // Save the updated organization
       await organization.save();
-
+      if (global.activeUsers.has(invitedUser.id)) {
+        const userSocket = global.activeUsers.get(invitedUser.id);
+        // Emit real-time notification
+        req.io.to(userSocket).emit("newNotification", {
+          type: "organization Invite", // Use the enum value from the schema
+          message: `you have been invited to join ${organization.name}, go to your organization email to accept the invite!`,
+        });
+        // Create notification in the database
+        await Notification.create({
+          userId: invitedUser.id,
+          type: "organization Invite", // Use the enum value from the schema
+          message: `you have been invited to join ${organization.name}, go to your organization email to accept the invite!`,
+          seen: false, // Default is false, but you can set it to true if needed
+        });
+      } else {
+        // Create notification in the database (no real-time update)
+        await Notification.create({
+          userId: invitedUser.id,
+          type: "organization Invite", // Use the enum value from the schema
+          message: `you have been invited to join ${organization.name}, go to your organization email to accept the invite!`,
+          seen: false, // Default is false
+        });
+      }
       // Return success message and the updated organization
-      return res
-        .status(200)
-        .json({ message: "Admin added successfully", organization });
+      return res.status(200).json({
+        message: "user has been sent a request to join",
+        organization,
+      });
     } catch (error) {
       console.error("Error in email sending:", error);
       return res.status(500).json({ message: error.message });

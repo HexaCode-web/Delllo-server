@@ -1,6 +1,8 @@
 const { default: mongoose } = require("mongoose");
 const Network = require("../models/Network.model");
 const User = require("../models/User.model");
+const Notification = require("../models/Notification.model");
+
 const createNetwork = async (req, res) => {
   const {
     name,
@@ -311,9 +313,61 @@ const approveRequest = async (req, res) => {
         new: true, // Return the updated document
       }
     );
-    const updatedUser = await User.findByIdAndUpdate(userId, {
-      $push: { joinedNetworks: { networkId } }, // Add userId to Accepted array
-    });
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $push: {
+          joinedNetworks: { networkId },
+          rAInChat: {
+            role: "AI",
+            text: `Welcome to the ${
+              network.name
+            } Network.  There are currently ${
+              network.Accepted.filter(
+                (user) => user.Active === true && user.ManualInActive === false
+              ).length
+            } active people.Would you be interested me helping you make the best connections while you're here today?`,
+            timestamp: new Date(),
+          },
+        },
+      },
+      { new: true }
+    );
+
+    if (global.activeUsers.has(userId)) {
+      const userSocket = global.activeUsers.get(userId);
+      req.io.to(userSocket).emit("NetworkJoin", {
+        networkID: networkId,
+        user: updatedUser,
+      });
+      req.io.to(userSocket).emit("newNotification", {
+        type: "network Approval", // Use the enum value from the schema
+        message: `Your request to join ${network.name} has been approved!`,
+        metadata: {
+          networkID: networkId,
+        },
+      });
+      await Notification.create({
+        userId: updatedUser._id,
+        type: "network Approval", // Use the enum value from the schema
+        message: `Your request to join ${network.name} has been approved!`,
+        metadata: {
+          networkID: networkId,
+        },
+        seen: false, // Default is false, but you can set it to true if needed
+      });
+    } else {
+      await Notification.create({
+        userId: updatedUser._id,
+        type: "network Approval", // Use the enum value from the schema
+        message: `Your request to join ${network.name} has been approved!`,
+        metadata: {
+          networkID: networkId,
+        },
+        seen: false, // Default is false, but you can set it to true if needed
+      });
+    }
     return res.status(200).json({
       message: "Join request approved successfully",
       network: updatedNetwork,
@@ -436,7 +490,34 @@ const changeUserActivity = async (req, res) => {
     return res.status(500).json({ message: "Server Error" });
   }
 };
+const removeUser = async (req, res) => {
+  const { networkId, userId } = req.params;
+  try {
+    const network = await Network.findById(networkId);
+    if (!network) {
+      return res.status(404).json({ message: "Network not found" });
+    }
+    const userIndex = network.Accepted.findIndex(
+      (user) => user.userId.toString() === userId
+    );
+    const user = await User.findById(userId);
+    if (userIndex === -1) {
+      return res.status(404).json({ message: "User not found in the network" });
+    }
+    network.Accepted.splice(userIndex, 1); // Remove user from Accepted array
+    user.joinedNetworks.pull({ networkId: networkId });
 
+    const updatedNetwork = await network.save();
+    await user.save();
+    return res.status(200).json({
+      message: "User removed successfully",
+      network: updatedNetwork,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
 module.exports = {
   createNetwork,
   getOrgNetwork,
@@ -449,4 +530,5 @@ module.exports = {
   dismissRequest,
   changeUserActivity,
   editNetwork,
+  removeUser,
 };

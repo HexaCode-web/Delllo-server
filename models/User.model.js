@@ -106,6 +106,12 @@ const joinedNetworksSchema = new mongoose.Schema({
     required: true,
   },
 });
+const rAInChatMessageSchema = new mongoose.Schema({
+  role: { type: String, enum: ["user", "AI"], required: true }, // Who sent the message
+  text: { type: String, required: true }, // Message content
+  timestamp: { type: Date, default: Date.now }, // Message timestamp
+  sender: { type: mongoose.Schema.Types.ObjectId, required: false },
+});
 const userSchema = mongoose.Schema(
   {
     FirstName: { type: String, require: true },
@@ -147,6 +153,10 @@ const userSchema = mongoose.Schema(
       default: [],
     },
     presentRole: { type: presentRoleSchema, default: {}, require: false },
+    rAInChat: {
+      type: [rAInChatMessageSchema], // Array of messages
+      default: [],
+    },
   },
   { timestamps: true }
 );
