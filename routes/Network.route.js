@@ -16,7 +16,7 @@ const {
 } = require("../controllers/Network.controller");
 
 const router = express.Router();
-router.get("/getNetwork/:networkId", getNetwork);
+router.get("/getNetwork/:networkId/:UserID", getNetwork);
 router.get("/nearby", getNearbyNetworks);
 router.get("/getOrgNetworks/:orgId", getOrgNetwork);
 router.patch("/deleteNetwork/:networkId", protect, deleteNetwork);

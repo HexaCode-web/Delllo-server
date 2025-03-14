@@ -15,6 +15,7 @@ const notificationSchema = new mongoose.Schema(
         "organization Invite",
         "network Approval",
         "custom",
+        "Message",
       ],
     },
     message: {

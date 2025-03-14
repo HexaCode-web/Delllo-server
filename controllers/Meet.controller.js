@@ -42,7 +42,7 @@ const createMeetRequest = async (req, res) => {
       // Emit real-time notification
       req.io.to(userSocket).emit("newNotification", {
         type: "meet Request", // Use the enum value from the schema
-        message: `User ${senderName} wants to meet you for: ${purpose}`,
+        message: `${senderName} wants to meet you for: ${purpose}`,
         metadata: {
           senderID: userIDA, // Store senderID in metadata
           senderName, // Store senderName in metadata
@@ -54,7 +54,7 @@ const createMeetRequest = async (req, res) => {
       await Notification.create({
         userId: userIDB,
         type: "meet Request", // Use the enum value from the schema
-        message: `User ${senderName} wants to meet you for: ${purpose}`,
+        message: `${senderName} wants to meet you for: ${purpose}`,
         metadata: {
           senderID: userIDA, // Store senderID in metadata
           senderName, // Store senderName in metadata
@@ -67,7 +67,7 @@ const createMeetRequest = async (req, res) => {
       await Notification.create({
         userId: userIDB,
         type: "meet Request", // Use the enum value from the schema
-        message: `User ${senderName} wants to meet you for: ${purpose}`,
+        message: `${senderName} wants to meet you for: ${purpose}`,
         metadata: {
           senderID: userIDA, // Store senderID in metadata
           senderName, // Store senderName in metadata
@@ -152,21 +152,19 @@ const getMeetingRequest = async (req, res) => {
 
   // Validate request query parameters
   if (!userIDA || !userIDB) {
-    return res
-      .status(400)
-      .json({ message: "Please provide userIDA, userIDB, and networkID" });
+    return res.status(400).json({ message: "Please provide userIDA, userIDB" });
   }
 
   try {
-    // Query for meeting request where both users are in the same network
-    const meetingRequest = await MeetRequest.findOne({
+    const query = {
       meetResponse: { $in: ["waiting", "accepted"] },
-
       $or: [
-        { userIDA, userIDB },
-        { userIDA: userIDB, userIDB: userIDA },
+        { userIDA: userIDA.toString(), userIDB: userIDB.toString() },
+        { userIDA: userIDB.toString(), userIDB: userIDA.toString() },
       ],
-    });
+    };
+
+    const meetingRequest = await MeetRequest.findOne(query);
 
     if (!meetingRequest) {
       return res.status(404).json({ message: "Meeting request not found" });
@@ -242,6 +240,20 @@ const getAcceptedMeetRequestsForUser = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+const getConversation = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const meetRequest = await MeetRequest.findById(id);
+    if (!meetRequest) {
+      return res.status(404).json({ error: "Meet request not found" });
+    }
+
+    res.status(200).json(meetRequest.Conversation);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 module.exports = {
   createMeetRequest,
   acceptMeetRequest,
@@ -249,4 +261,5 @@ module.exports = {
   rejectMeetRequest,
   getMeetRequestsForUser,
   getAcceptedMeetRequestsForUser,
+  getConversation,
 };

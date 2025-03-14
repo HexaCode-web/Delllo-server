@@ -196,10 +196,13 @@ const editNetwork = async (req, res) => {
   }
 };
 const getNetwork = async (req, res) => {
-  const { networkId } = req.params;
+  const { networkId, UserID } = req.params;
   try {
     const network = await Network.findById(networkId);
     if (!network) {
+      const user = await User.findById(UserID);
+      user.joinedNetworks.pull({ networkId: networkId });
+      await user.save();
       return res.status(404).json({ message: "Network not found" });
     }
     return res.status(200).json(network);
