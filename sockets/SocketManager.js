@@ -183,7 +183,7 @@ const initializeSocket = (server) => {
       await User.findByIdAndUpdate(
         message.sender,
         {
-          $push: { rAInChat: message }, // ✅ Fix the structure
+          $push: { rAInChat: message },
         },
         { new: true }
       );

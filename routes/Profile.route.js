@@ -29,7 +29,9 @@ const {
   manualAddWorkEmail,
   deleteUser,
   deleteWorkEmail,
+  uploadPhoto,
 } = require("../controllers/Profile.controller");
+const upload = require("../functions/fileUpload");
 const router = express.Router();
 
 // Routes
@@ -70,5 +72,7 @@ router.delete("/delete/:id", protect, deleteUser);
 router.post("/manualAddWorkEmail/:Id", protect, manualAddWorkEmail);
 router.get("/addAssociatedEmail/:userId/:email", addAssociatedEmail);
 router.delete("/deleteWorkEmail/:id", protect, deleteWorkEmail);
+//photos
+router.post("/uploadPhoto", upload.single("photo"), uploadPhoto);
 
 module.exports = router;

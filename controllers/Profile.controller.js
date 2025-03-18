@@ -1,6 +1,7 @@
 const User = require("../models/User.model");
 const Organization = require("../models/Organization.model");
 const bcrypt = require("bcrypt");
+const upload = require("../functions/fileUpload");
 //skills
 const addSkill = async (req, res) => {
   try {
@@ -810,6 +811,34 @@ const deleteUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+const uploadPhoto = async (req, res) => {
+  if (!req.file) {
+    return res
+      .status(400)
+      .json({ message: "No file uploaded or invalid file type" });
+  }
+
+  // If everything is successful, return the file path
+  res.json({
+    message: "File uploaded successfully",
+    filePath: `/uploads/${req.file.filename}`,
+  });
+};
+
+// Retrieve all uploaded photos
+// app.get("/photos", (req, res) => {
+//   const uploadDir = path.join(__dirname, "uploads");
+//   fs.readdir(uploadDir, (err, files) => {
+//     if (err) {
+//       return res.status(500).json({ message: "Unable to scan files" });
+//     }
+//     const photos = files.map((file) => ({
+//       name: file,
+//       url: `/uploads/${file}`,
+//     }));
+//     res.json(photos);
+//   });
+// });
 module.exports = {
   addSkill,
   deleteSkill,
@@ -840,4 +869,5 @@ module.exports = {
   manualAddWorkEmail,
   deleteUser,
   deleteWorkEmail,
+  uploadPhoto,
 };

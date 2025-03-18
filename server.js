@@ -14,9 +14,9 @@ const corsOptions = require("./middleware/corsOptions.js");
 const cors = require("cors");
 const checkForActive = require("./functions/checkForActive.js");
 const http = require("http");
-
 // Import the Socket.IO module
 const initializeSocket = require("./sockets/SocketManager.js");
+const path = require("path");
 
 const mongoDB = process.env.DB;
 
@@ -25,7 +25,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(cors(corsOptions));
-
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err);
+  res.status(500).json({ message: "Server error", error: err.message });
+});
 // Create an HTTP server
 const server = http.createServer(app);
 
@@ -46,12 +50,14 @@ app.use("/api/network", networkRoutes);
 app.use("/api/meet", MeetRoutes);
 app.use("/api/notifications", NotificationRoutes);
 // Connect to MongoDB and start the server
+
 mongoose
   .connect(mongoDB)
   .then(() => {
     console.log("MongoDB connected");
     server.listen(port, () => {
       console.log(`Server listening on port ${port}, DB is connected`);
+
       setInterval(checkForActive, 12000);
     });
   })
