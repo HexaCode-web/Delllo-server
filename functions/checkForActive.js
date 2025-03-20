@@ -90,9 +90,9 @@ const checkForActive = async () => {
       if (updates.length > 0) {
         try {
           await Network.bulkWrite(updates);
-          console.log(
-            `Updated ${updates.length} users in network ${network.name}.`
-          );
+          // console.log(
+          //   `Updated ${updates.length} users in network ${network.name}.`
+          // );
         } catch (error) {
           console.error(
             `Error updating users in network ${network.name}:`,
