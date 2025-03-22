@@ -9,10 +9,6 @@ flaskSocket.on("connect", () => {
   console.log("✅ Connected to Flask WebSocket!");
 });
 
-flaskSocket.on("disconnect", () => {
-  console.log("❌ Disconnected from Flask WebSocket.");
-});
-
 // Initialize Socket.IO and handle events
 const initializeSocket = (server) => {
   const io = socketIo(server);
@@ -25,25 +21,25 @@ const initializeSocket = (server) => {
   global.activeUsers = new Map();
 
   // Set up listeners for matchmaking events from Flask
-  flaskSocket.on("matchmaking_progress", (data) => {
+  flaskSocket.on("matchmaking_progress", (Data) => {
     console.log(
-      `📊 Match progress: ${data.progress.current}/${data.progress.total} for user ${data.userId}`
+      `📊 Match progress: ${Data.progress.current}/${Data.progress.total} for user ${Data.userId}`
     );
 
-    if (global.activeUsers.has(data.userId)) {
-      const userSocket = global.activeUsers.get(data.userId);
-      io.to(userSocket).emit("matchmaking_progress", data);
+    if (global.activeUsers.has(Data.userId)) {
+      const userSocket = global.activeUsers.get(Data.userId);
+      io.to(userSocket).emit("matchmaking_progress", Data);
     }
   });
 
-  flaskSocket.on("matchmaking_complete", (data) => {
+  flaskSocket.on("matchmaking_complete", (Data) => {
     console.log(
-      `✅ Matchmaking complete for user ${data.userId} with ${data.matches.length} matches`
+      `✅ Matchmaking complete for user ${Data.userId} with ${Data.matches.length} matches`
     );
 
-    if (global.activeUsers.has(data.userId)) {
-      const userSocket = global.activeUsers.get(data.userId);
-      io.to(userSocket).emit("matchmaking_complete", data);
+    if (global.activeUsers.has(Data.userId)) {
+      const userSocket = global.activeUsers.get(Data.userId);
+      io.to(userSocket).emit("matchmaking_complete", Data);
     }
   });
 
@@ -55,12 +51,12 @@ const initializeSocket = (server) => {
     });
 
     // Broadcast new notification
-    socket.on("newNotification", (data) => {
-      io.emit("newNotification", data);
+    socket.on("newNotification", (Data) => {
+      io.emit("newNotification", Data);
     });
 
-    socket.on("NetworkJoin", (data) => {
-      io.emit("NetworkJoin", data);
+    socket.on("NetworkJoin", (Data) => {
+      io.emit("NetworkJoin", Data);
     });
 
     socket.on("joinRoom", async (meetRequestID, UserPlace) => {
@@ -133,10 +129,10 @@ const initializeSocket = (server) => {
       }
     });
 
-    socket.on("sendMessage", async (data) => {
-      console.log("📨 Message received:", data);
+    socket.on("sendMessage", async (Data) => {
+      console.log("📨 Message received:", Data);
 
-      const { meetRequestID, senderID, message } = data;
+      const { meetRequestID, senderID, message } = Data;
 
       // Update the MeetRequest object with the new message
       const meetRequest = await MeetRequest.findById(meetRequestID);
@@ -222,7 +218,7 @@ const initializeSocket = (server) => {
     });
 
     socket.on("SendMessageToBot", async (message) => {
-      console.log("📨Rain Message received:", message);
+      console.log("📨 Received User message To Rain:", message);
       const messageSender = message.sender;
 
       console.log("🔥 Sending user message to Flask with chat history");
@@ -254,6 +250,7 @@ const initializeSocket = (server) => {
           io.to(userSocket).emit("receiveBotMessage", updatedUser);
         }
       } else {
+        //passed the quick reply stage
         const userData = await User.findById(messageSender);
         const chatHistory = userData.rAInChat.slice(-5); // Last 5 messages
 
@@ -265,10 +262,34 @@ const initializeSocket = (server) => {
           message: message.text,
           history: formattedHistory,
         });
+        socket.emit("awaiting_AI_response");
 
-        flaskSocket.once("chat_response", async (data) => {
-          console.log("🤖 AI Response:", data.answer);
-          console.log("🔍 Checking messageSender:", messageSender);
+        // Timeout to handle AI response delay
+        const timeout = setTimeout(async () => {
+          console.error("⏳ AI response timeout for user:", messageSender);
+          if (global.activeUsers.has(messageSender)) {
+            const userSocket = global.activeUsers.get(messageSender);
+            const updatedUser = await User.findByIdAndUpdate(
+              messageSender,
+              {
+                $push: {
+                  rAInChat: {
+                    role: "AI",
+                    text: "Servers are busy. Please try again later.",
+                    timestamp: new Date(),
+                  },
+                },
+              },
+              { new: true }
+            );
+            io.to(userSocket).emit("receiveBotMessage", updatedUser);
+          }
+        }, 100000); // 3 minutes timeout (adjustable)
+
+        // Handle AI response
+        flaskSocket.once("chat_response", async (Data) => {
+          clearTimeout(timeout); // Cancel timeout if AI responds in time
+          console.log("🤖 AI Response:", Data.answer);
 
           const updatedUser = await User.findByIdAndUpdate(
             messageSender,
@@ -276,7 +297,7 @@ const initializeSocket = (server) => {
               $push: {
                 rAInChat: {
                   role: "AI",
-                  text: data.answer,
+                  text: Data.answer,
                   timestamp: new Date(),
                 },
               },
@@ -301,60 +322,176 @@ const initializeSocket = (server) => {
       }
     });
 
+    // Handle Flask disconnection (only register this once)
+    flaskSocket.off("disconnect").on("disconnect", async () => {
+      console.error("🚨 Flask server disconnected!");
+
+      for (const [messageSender, userSocket] of global.activeUsers.entries()) {
+        try {
+          const updatedUser = await User.findByIdAndUpdate(
+            messageSender,
+            {
+              $push: {
+                rAInChat: {
+                  role: "AI",
+                  text: "Connection Error. Please try again later.",
+                  timestamp: new Date(),
+                },
+              },
+            },
+            { new: true }
+          );
+
+          io.to(userSocket).emit("receiveBotMessage", updatedUser);
+        } catch (error) {
+          console.error(
+            "❌ Error updating user chat on Flask disconnect:",
+            error
+          );
+        }
+      }
+    });
+
     // Enhanced GenerateMatches event handler
     socket.on("GenerateMatches", async (data) => {
       try {
-        console.log("🧩 Generate Matches Request:", data.User._id);
+        const Data = {
+          Profiles:
+            [
+              {
+                FirstName: "Sarah",
+                LastName: "Hassan",
+                email: "sarah.hassan@mediclinic.com",
+                password:
+                  "$2b$10$Y1aHqX7bXtS8TznP9KDcyu/P2yf5lJSbX9t0MY13K09EjGFD.MT7q",
+                longitude: "31.235712",
+                DOB: { $date: { $numberLong: "1728000000000" } },
+                Address: "45 Nile Street, Cairo, Egypt",
+                latitude: "30.044420",
+                presentRole: {
+                  Company: "MediClinic",
+                  Position: "Cardiologist",
+                  StartDate: "2019-07-15T08:30:00.000Z",
+                },
+                skills: [
+                  {
+                    Level: "Expert",
+                    Skill: "Cardiovascular Surgery",
+                    Reference: "Performed over 500 successful heart surgeries",
+                  },
+                ],
+                ImmediateNeeds: [{ ImmediateNeed: "Fellow Doctor" }],
+                education: [
+                  {
+                    Degree: "Doctor of Medicine",
+                    Institution: "Cairo University",
+                    EndDate: "2016-06-30T00:00:00.000Z",
+                  },
+                ],
+              },
+              {
+                FirstName: "Marco",
+                LastName: "Khairy",
+                email: "marco.khairy@techhub.com",
+                password:
+                  "$2b$10$X1yHqX7bWtS8TznP9KDcyu/P2yf5lJSbX9t0NY13K09EjGFD.MT7q",
+                longitude: "31.235711",
+                DOB: { $date: { $numberLong: "1727000000000" } },
+                Address: "Nasr City, Cairo, Egypt",
+                latitude: "30.044419",
+                presentRole: {
+                  Company: "TechHub",
+                  Position: "Web Developer",
+                  StartDate: "2018-06-10T08:30:00.000Z",
+                },
+                skills: [
+                  {
+                    Level: "Expert",
+                    Skill: "React.js",
+                    Reference: "Built multiple production-level apps",
+                  },
+                ],
+                ImmediateNeeds: [{ ImmediateNeed: "Mentor" }],
+                education: [
+                  {
+                    Degree: "Bachelor in Computer Science",
+                    Institution: "Cairo University",
+                    EndDate: "2017-06-30T00:00:00.000Z",
+                  },
+                ],
+              },
+              {
+                FirstName: "Ahmed",
+                LastName: "Youssef",
+                email: "ahmed.youssef@automotive.com",
+                password:
+                  "$2b$10$V5aHqX8bWtS9PznP8LDcyu/T3yf6lJShX8t0NY14K09EjHFD.NT8q",
+                longitude: "31.210987",
+                DOB: { $date: { $numberLong: "1723400000000" } },
+                Address: "67 Engineering Street, Giza, Egypt",
+                latitude: "29.975819",
+                presentRole: {
+                  Company: "AutoTech",
+                  Position: "Automotive Engineer",
+                  StartDate: "2020-03-10T09:00:00.000Z",
+                },
+                skills: [
+                  {
+                    Level: "Advanced",
+                    Skill: "Vehicle Dynamics",
+                    Reference: "Developed next-gen hybrid car chassis",
+                  },
+                ],
+                ImmediateNeeds: [{ ImmediateNeed: "Architect" }],
+                education: [
+                  {
+                    Degree: "Bachelor of Science in Mechanical Engineering",
+                    Institution: "Ain Shams University",
+                    EndDate: "2019-06-30T00:00:00.000Z",
+                  },
+                ],
+              },
+            ] || [],
+          User: data.User,
+          timestamp: new Date(),
+        };
 
-        const userId = data.User._id;
+        console.log("🧩 Generate Matches Request:", Data.User._id);
+        const userId = Data.User._id;
 
-        // Notify client that matchmaking has started
+        if (!Data.Profiles || Data.Profiles.length === 0) {
+          console.log("🔍 No profiles provided");
+          return;
+        }
+
+        // Notify the frontend that matchmaking has started
         if (global.activeUsers.has(userId)) {
           const userSocket = global.activeUsers.get(userId);
-          io.to(userSocket).emit("matchmaking_started", {
-            message: "Starting to find your matches...",
-            timestamp: new Date(),
-          });
+          io.to(userSocket).emit("matchmaking_started");
         }
 
-        // If profiles aren't provided, fetch them from the database
-        if (!data.Profiles || data.Profiles.length === 0) {
-          console.log("🔍 No profiles provided, fetching from database");
+        flaskSocket.emit("matchmaking_request", Data);
 
-          // Get user's networks to find relevant profiles
-          const user = await User.findById(userId);
-          if (!user) {
-            throw new Error("User not found");
+        const timeout = setTimeout(() => {
+          console.error("⏳ AI response timeout for user:", userId);
+          if (global.activeUsers.has(userId)) {
+            const userSocket = global.activeUsers.get(userId);
+            io.to(userSocket).emit("matchMakingTimeout");
           }
+        }, 100000); // 3 minutes timeout
 
-          // Extract network IDs from joinedNetworks
-          const networkIds = user.joinedNetworks.map(
-            (network) => network.networkId
-          );
+        flaskSocket.once("matchmaking_response", (response) => {
+          clearTimeout(timeout);
+          console.log("✅ Received matchmaking response:", response);
 
-          // Find users in the same networks
-          const potentialMatches = await User.find({
-            _id: { $ne: userId }, // Exclude the requesting user
-            "joinedNetworks.networkId": { $in: networkIds }, // Users in same networks
-          }).limit(20);
-
-          // Update data with fetched profiles
-          data.Profiles = potentialMatches;
-          console.log(
-            `📊 Found ${potentialMatches.length} potential matches in same networks`
-          );
-        }
-
-        // Add timestamp to the data for tracking
-        data.timestamp = new Date();
-
-        // Emit the event to Flask
-        flaskSocket.emit("matchmaking_request", data);
-        console.log("🚀 Sent matchmaking request to Flask");
+          if (global.activeUsers.has(userId)) {
+            const userSocket = global.activeUsers.get(userId);
+            io.to(userSocket).emit("matchmaking_complete", response);
+          }
+        });
       } catch (error) {
         console.error("❌ Error in GenerateMatches:", error);
 
-        // Notify user of error
         if (global.activeUsers.has(data.User._id)) {
           const userSocket = global.activeUsers.get(data.User._id);
           io.to(userSocket).emit("matchmaking_error", {
