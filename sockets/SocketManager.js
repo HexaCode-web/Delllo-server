@@ -3,7 +3,10 @@ const User = require("../models/User.model");
 const MeetRequest = require("../models/MeetRequest.model");
 const Notification = require("../models/Notification.model");
 const socketClient = require("socket.io-client");
-const flaskSocket = socketClient("ws://127.0.0.1:5000"); // Ensure WebSocket connection
+const flaskSocket = socketClient("ws://127.0.0.1:5000", {
+  reconnection: true,
+  timeout: 600000, // Increase timeout to 10 minutes
+}); // Ensure WebSocket connection
 
 flaskSocket.on("connect", () => {
   console.log("✅ Connected to Flask WebSocket!");
@@ -356,102 +359,7 @@ const initializeSocket = (server) => {
     socket.on("GenerateMatches", async (data) => {
       try {
         const Data = {
-          Profiles:
-            [
-              {
-                FirstName: "Sarah",
-                LastName: "Hassan",
-                email: "sarah.hassan@mediclinic.com",
-                password:
-                  "$2b$10$Y1aHqX7bXtS8TznP9KDcyu/P2yf5lJSbX9t0MY13K09EjGFD.MT7q",
-                longitude: "31.235712",
-                DOB: { $date: { $numberLong: "1728000000000" } },
-                Address: "45 Nile Street, Cairo, Egypt",
-                latitude: "30.044420",
-                presentRole: {
-                  Company: "MediClinic",
-                  Position: "Cardiologist",
-                  StartDate: "2019-07-15T08:30:00.000Z",
-                },
-                skills: [
-                  {
-                    Level: "Expert",
-                    Skill: "Cardiovascular Surgery",
-                    Reference: "Performed over 500 successful heart surgeries",
-                  },
-                ],
-                ImmediateNeeds: [{ ImmediateNeed: "Fellow Doctor" }],
-                education: [
-                  {
-                    Degree: "Doctor of Medicine",
-                    Institution: "Cairo University",
-                    EndDate: "2016-06-30T00:00:00.000Z",
-                  },
-                ],
-              },
-              {
-                FirstName: "Marco",
-                LastName: "Khairy",
-                email: "marco.khairy@techhub.com",
-                password:
-                  "$2b$10$X1yHqX7bWtS8TznP9KDcyu/P2yf5lJSbX9t0NY13K09EjGFD.MT7q",
-                longitude: "31.235711",
-                DOB: { $date: { $numberLong: "1727000000000" } },
-                Address: "Nasr City, Cairo, Egypt",
-                latitude: "30.044419",
-                presentRole: {
-                  Company: "TechHub",
-                  Position: "Web Developer",
-                  StartDate: "2018-06-10T08:30:00.000Z",
-                },
-                skills: [
-                  {
-                    Level: "Expert",
-                    Skill: "React.js",
-                    Reference: "Built multiple production-level apps",
-                  },
-                ],
-                ImmediateNeeds: [{ ImmediateNeed: "Mentor" }],
-                education: [
-                  {
-                    Degree: "Bachelor in Computer Science",
-                    Institution: "Cairo University",
-                    EndDate: "2017-06-30T00:00:00.000Z",
-                  },
-                ],
-              },
-              {
-                FirstName: "Ahmed",
-                LastName: "Youssef",
-                email: "ahmed.youssef@automotive.com",
-                password:
-                  "$2b$10$V5aHqX8bWtS9PznP8LDcyu/T3yf6lJShX8t0NY14K09EjHFD.NT8q",
-                longitude: "31.210987",
-                DOB: { $date: { $numberLong: "1723400000000" } },
-                Address: "67 Engineering Street, Giza, Egypt",
-                latitude: "29.975819",
-                presentRole: {
-                  Company: "AutoTech",
-                  Position: "Automotive Engineer",
-                  StartDate: "2020-03-10T09:00:00.000Z",
-                },
-                skills: [
-                  {
-                    Level: "Advanced",
-                    Skill: "Vehicle Dynamics",
-                    Reference: "Developed next-gen hybrid car chassis",
-                  },
-                ],
-                ImmediateNeeds: [{ ImmediateNeed: "Architect" }],
-                education: [
-                  {
-                    Degree: "Bachelor of Science in Mechanical Engineering",
-                    Institution: "Ain Shams University",
-                    EndDate: "2019-06-30T00:00:00.000Z",
-                  },
-                ],
-              },
-            ] || [],
+          Profiles: data.Profiles || [],
           User: data.User,
           timestamp: new Date(),
         };
