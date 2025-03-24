@@ -25,9 +25,7 @@ const initializeSocket = (server) => {
 
   // Set up listeners for matchmaking events from Flask
   flaskSocket.on("matchmaking_progress", (Data) => {
-    console.log(
-      `📊 Match progress: ${Data.progress.current}/${Data.progress.total} for user ${Data.userId}`
-    );
+    console.log("🔄 Matchmaking Progress:", Data);
 
     if (global.activeUsers.has(Data.userId)) {
       const userSocket = global.activeUsers.get(Data.userId);
@@ -359,9 +357,11 @@ const initializeSocket = (server) => {
     socket.on("GenerateMatches", async (data) => {
       try {
         const Data = {
-          Profiles: data.Profiles || [],
+          Profiles: data.Profiles,
           User: data.User,
           timestamp: new Date(),
+          userId: data.User._id || data.User.user._id,
+          selectedNetwork: data.selectedNetwork,
         };
 
         console.log("🧩 Generate Matches Request:", Data.User._id);
@@ -376,6 +376,21 @@ const initializeSocket = (server) => {
         if (global.activeUsers.has(userId)) {
           const userSocket = global.activeUsers.get(userId);
           io.to(userSocket).emit("matchmaking_started");
+          const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            {
+              $push: {
+                rAInChat: {
+                  role: "AI",
+                  text: `Looking for a suitable person in ${data.selectedNetwork.name} Network...`,
+                  timestamp: new Date(),
+                },
+              },
+            },
+            { new: true }
+          );
+
+          io.to(userSocket).emit("receiveBotMessage", updatedUser);
         }
 
         flaskSocket.emit("matchmaking_request", Data);
@@ -386,15 +401,34 @@ const initializeSocket = (server) => {
             const userSocket = global.activeUsers.get(userId);
             io.to(userSocket).emit("matchMakingTimeout");
           }
-        }, 100000); // 3 minutes timeout
+        }, 180000); // 3 minutes timeout
 
-        flaskSocket.once("matchmaking_response", (response) => {
+        flaskSocket.once("matchmaking_response", async (response) => {
           clearTimeout(timeout);
-          console.log("✅ Received matchmaking response:", response);
+          console.log(
+            "✅ Received matchmaking response:",
+            response,
+            response.matches
+          );
 
           if (global.activeUsers.has(userId)) {
             const userSocket = global.activeUsers.get(userId);
             io.to(userSocket).emit("matchmaking_complete", response);
+            const updatedUser = await User.findByIdAndUpdate(
+              userId,
+              {
+                $push: {
+                  rAInChat: {
+                    role: "AI",
+                    text: `Found ${response.matches.length} profiles suitable in ${data.selectedNetwork} network...`,
+                    timestamp: new Date(),
+                  },
+                },
+              },
+              { new: true }
+            );
+
+            io.to(userSocket).emit("receiveBotMessage", updatedUser);
           }
         });
       } catch (error) {

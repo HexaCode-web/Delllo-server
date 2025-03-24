@@ -1,0 +1,283 @@
+[
+  {
+    "_id": "2",
+    "FirstName": "Sarah",
+    "LastName": "Hassan",
+    "email": "sarah.hassan@mediclinic.com",
+    "password": "$2b$10$Y1aHqX7bXtS8TznP9KDcyu/P2yf5lJSbX9t0MY13K09EjGFD.MT7q",
+    "longitude": "31.235712",
+    "DOB": { "$date": { "$numberLong": "1728000000000" } },
+    "Address": "45 Nile Street, Cairo, Egypt",
+    "latitude": "30.044420",
+    "presentRole": {
+      "Company": "MediClinic",
+      "Position": "Cardiologist",
+      "StartDate": "2019-07-15T08:30:00.000Z"
+    },
+    "skills": [
+      {
+        "Level": "Expert",
+        "Skill": "Cardiovascular Surgery",
+        "Reference": "Performed over 500 successful heart surgeries"
+      }
+    ],
+    "ImmediateNeeds": [{ "ImmediateNeed": "Fellow Doctor" }],
+    "education": [
+      {
+        "Degree": "Doctor of Medicine",
+        "Institution": "Cairo University",
+        "EndDate": "2016-06-30T00:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "_id": "3",
+
+    "FirstName": "Marco",
+    "LastName": "Khairy",
+    "email": "marco.khairy@techhub.com",
+    "password": "$2b$10$X1yHqX7bWtS8TznP9KDcyu/P2yf5lJSbX9t0NY13K09EjGFD.MT7q",
+    "longitude": "31.235711",
+    "DOB": { "$date": { "$numberLong": "1727000000000" } },
+    "Address": "Nasr City, Cairo, Egypt",
+    "latitude": "30.044419",
+    "presentRole": {
+      "Company": "TechHub",
+      "Position": "Web Developer",
+      "StartDate": "2018-06-10T08:30:00.000Z"
+    },
+    "skills": [
+      {
+        "Level": "Expert",
+        "Skill": "React.js",
+        "Reference": "Built multiple production-level apps"
+      }
+    ],
+    "ImmediateNeeds": [{ "ImmediateNeed": "Mentor" }],
+    "education": [
+      {
+        "Degree": "Bachelor in Computer Science",
+        "Institution": "Cairo University",
+        "EndDate": "2017-06-30T00:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "_id": "4",
+
+    "FirstName": "Ahmed",
+    "LastName": "Youssef",
+    "email": "ahmed.youssef@automotive.com",
+    "password": "$2b$10$V5aHqX8bWtS9PznP8LDcyu/T3yf6lJShX8t0NY14K09EjHFD.NT8q",
+    "longitude": "31.210987",
+    "DOB": { "$date": { "$numberLong": "1723400000000" } },
+    "Address": "67 Engineering Street, Giza, Egypt",
+    "latitude": "29.975819",
+    "presentRole": {
+      "Company": "AutoTech",
+      "Position": "Automotive Engineer",
+      "StartDate": "2020-03-10T09:00:00.000Z"
+    },
+    "skills": [
+      {
+        "Level": "Advanced",
+        "Skill": "Vehicle Dynamics",
+        "Reference": "Developed next-gen hybrid car chassis"
+      }
+    ],
+    "ImmediateNeeds": [{ "ImmediateNeed": "Architect" }],
+    "education": [
+      {
+        "Degree": "Bachelor of Science in Mechanical Engineering",
+        "Institution": "Ain Shams University",
+        "EndDate": "2019-06-30T00:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "_id": "5",
+    "FirstName": "Omar",
+    "LastName": "Fahmy",
+    "email": "omar.fahmy@datascience.com",
+    "password": "$2b$10$G1hHqX7bXtS8TznP9KDcyu/P2yf5lJSbX9t0MY13K09EjGFD.MT7q",
+    "longitude": "31.235900",
+    "DOB": { "$date": { "$numberLong": "1710000000000" } },
+    "Address": "Zamalek, Cairo, Egypt",
+    "latitude": "30.050000",
+    "presentRole": {
+      "Company": "DataAI",
+      "Position": "Data Scientist",
+      "StartDate": "2020-11-10T09:00:00.000Z"
+    },
+    "skills": [
+      {
+        "Level": "Advanced",
+        "Skill": "Python",
+        "Reference": "Built AI models for predictions"
+      }
+    ],
+    "ImmediateNeeds": [{ "ImmediateNeed": "AI Collaboration" }],
+    "education": [
+      {
+        "Degree": "Master's in Data Science",
+        "Institution": "AUC",
+        "EndDate": "2018-06-30T00:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "_id": "6",
+    "FirstName": "Nour",
+    "LastName": "El-Sayed",
+    "email": "nour.elsayed@marketinghub.com",
+    "password": "$2b$10$H2jHqX7bXtS8TznP9KDcyu/P2yf5lJSbX9t0MY13K09EjGFD.MT7q",
+    "longitude": "31.245712",
+    "DOB": { "$date": { "$numberLong": "1705000000000" } },
+    "Address": "Downtown, Cairo, Egypt",
+    "latitude": "30.044999",
+    "presentRole": {
+      "Company": "MarketingHub",
+      "Position": "Digital Marketer",
+      "StartDate": "2017-09-01T08:30:00.000Z"
+    },
+    "skills": [
+      {
+        "Level": "Expert",
+        "Skill": "SEO",
+        "Reference": "Managed campaigns for 50+ clients"
+      }
+    ],
+    "ImmediateNeeds": [{ "ImmediateNeed": "Tech-driven Marketing" }],
+    "education": [
+      {
+        "Degree": "Bachelor in Business",
+        "Institution": "Cairo University",
+        "EndDate": "2015-06-30T00:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "_id": "7",
+    "FirstName": "Hassan",
+    "LastName": "Ragab",
+    "email": "hassan.ragab@bankingcorp.com",
+    "password": "$2b$10$J4kHqX7bXtS8TznP9KDcyu/P2yf5lJSbX9t0MY13K09EjGFD.MT7q",
+    "longitude": "31.230000",
+    "DOB": { "$date": { "$numberLong": "1699000000000" } },
+    "Address": "Maadi, Cairo, Egypt",
+    "latitude": "30.020000",
+    "presentRole": {
+      "Company": "BankingCorp",
+      "Position": "Financial Analyst",
+      "StartDate": "2021-01-15T09:00:00.000Z"
+    },
+    "skills": [
+      {
+        "Level": "Advanced",
+        "Skill": "Financial Modeling",
+        "Reference": "Developed risk analysis tools"
+      }
+    ],
+    "ImmediateNeeds": [{ "ImmediateNeed": "Investment Strategies" }],
+    "education": [
+      {
+        "Degree": "MBA in Finance",
+        "Institution": "AUC",
+        "EndDate": "2019-06-30T00:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "_id": "8",
+    "FirstName": "Dina",
+    "LastName": "Mostafa",
+    "email": "dina.mostafa@productdesign.com",
+    "password": "$2b$10$K5lHqX7bXtS8TznP9KDcyu/P2yf5lJSbX9t0MY13K09EjGFD.MT7q",
+    "longitude": "31.200987",
+    "DOB": { "$date": { "$numberLong": "1687000000000" } },
+    "Address": "Heliopolis, Cairo, Egypt",
+    "latitude": "30.099999",
+    "presentRole": {
+      "Company": "UXStudio",
+      "Position": "Product Designer",
+      "StartDate": "2019-06-01T08:30:00.000Z"
+    },
+    "skills": [
+      {
+        "Level": "Expert",
+        "Skill": "UI/UX",
+        "Reference": "Designed user-friendly applications"
+      }
+    ],
+    "ImmediateNeeds": [{ "ImmediateNeed": "Collaboration with Developers" }],
+    "education": [
+      {
+        "Degree": "Bachelor in Design",
+        "Institution": "German University in Cairo",
+        "EndDate": "2016-06-30T00:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "_id": "9",
+    "FirstName": "Mohamed",
+    "LastName": "Saad",
+    "email": "mohamed.saad@cybertech.com",
+    "password": "$2b$10$L6mHqX7bXtS8TznP9KDcyu/P2yf5lJSbX9t0MY13K09EjGFD.MT7q",
+    "longitude": "31.280000",
+    "DOB": { "$date": { "$numberLong": "1678000000000" } },
+    "Address": "6th of October, Cairo, Egypt",
+    "latitude": "30.088000",
+    "presentRole": {
+      "Company": "CyberTech",
+      "Position": "Cybersecurity Engineer",
+      "StartDate": "2022-04-01T09:00:00.000Z"
+    },
+    "skills": [
+      {
+        "Level": "Advanced",
+        "Skill": "Penetration Testing",
+        "Reference": "Secured major corporate networks"
+      }
+    ],
+    "ImmediateNeeds": [{ "ImmediateNeed": "Network Security Training" }],
+    "education": [
+      {
+        "Degree": "Bachelor in Cybersecurity",
+        "Institution": "Ain Shams University",
+        "EndDate": "2020-06-30T00:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "_id": "10",
+    "FirstName": "Lina",
+    "LastName": "Ahmed",
+    "email": "lina.ahmed@startupconsult.com",
+    "password": "$2b$10$M7nHqX7bXtS8TznP9KDcyu/P2yf5lJSbX9t0MY13K09EjGFD.MT7q",
+    "longitude": "31.290000",
+    "DOB": { "$date": { "$numberLong": "1669000000000" } },
+    "Address": "New Cairo, Egypt",
+    "latitude": "30.044000",
+    "presentRole": {
+      "Company": "StartupConsult",
+      "Position": "Startup Consultant",
+      "StartDate": "2015-08-01T09:00:00.000Z"
+    },
+    "skills": [
+      {
+        "Level": "Expert",
+        "Skill": "Entrepreneurship",
+        "Reference": "Helped 30+ startups launch"
+      }
+    ],
+    "ImmediateNeeds": [{ "ImmediateNeed": "Tech Startup Collaboration" }],
+    "education": [
+      {
+        "Degree": "MBA in Entrepreneurship",
+        "Institution": "MIT Sloan",
+        "EndDate": "2014-06-30T00:00:00.000Z"
+      }
+    ]
+  }
+]
