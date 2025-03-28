@@ -1,10 +1,10 @@
 const express = require("express");
-require("dotenv").config();
+require("dotenv").config({path:"./.env"});
 const app = express();
 const port = process.env.PORT || 3000;
 const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
-const authRoutes = require("./routes/auth.route.js");
+const authRoutes = require("./routes/Auth.route.js");
 const profileRoutes = require("./routes/Profile.route.js");
 const organizationRoutes = require("./routes/Organization.route.js");
 const networkRoutes = require("./routes/Network.route.js");
@@ -18,7 +18,7 @@ const http = require("http");
 const initializeSocket = require("./sockets/SocketManager.js");
 const path = require("path");
 
-const mongoDB = process.env.DB;
+const mongoDB = process.env.MONGO_URI;
 
 // Middleware
 app.use(express.json());

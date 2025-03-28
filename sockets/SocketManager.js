@@ -233,25 +233,12 @@ const initializeSocket = (server) => {
       );
 
       if (message.text === "Yes") {
-        const updatedUser = await User.findByIdAndUpdate(
+        sendMSGtoUser(
           messageSender,
-          {
-            $push: {
-              rAInChat: {
-                role: "AI",
-                text: `I first would like to know your objectives and how long you're around for today? Do you mind if I analyse and then potentially ask a few more questions to help get the best connections in the Network?`,
-                timestamp: new Date(),
-              },
-            },
-          },
-          { new: true }
+          `I first would like to know your objectives and how long you're around for today? Do you mind if I analyse and then potentially ask a few more questions to help get the best connections in the Network?`
         );
-        if (global.activeUsers.has(messageSender)) {
-          const userSocket = global.activeUsers.get(messageSender);
-          io.to(userSocket).emit("receiveBotMessage", updatedUser);
-        }
       } else {
-        //passed the quick reply stage
+        //Passed the quick reply stage
         const userData = await User.findById(messageSender);
         const chatHistory = userData.rAInChat.slice(-5); // Last 5 messages
 
@@ -268,57 +255,17 @@ const initializeSocket = (server) => {
         // Timeout to handle AI response delay
         const timeout = setTimeout(async () => {
           console.error("⏳ AI response timeout for user:", messageSender);
-          if (global.activeUsers.has(messageSender)) {
-            const userSocket = global.activeUsers.get(messageSender);
-            const updatedUser = await User.findByIdAndUpdate(
-              messageSender,
-              {
-                $push: {
-                  rAInChat: {
-                    role: "AI",
-                    text: "Servers are busy. Please try again later.",
-                    timestamp: new Date(),
-                  },
-                },
-              },
-              { new: true }
-            );
-            io.to(userSocket).emit("receiveBotMessage", updatedUser);
-          }
+          sendMSGtoUser(
+            messageSender,
+            "Servers are busy. Please try again later."
+          );
         }, 100000); // 3 minutes timeout (adjustable)
 
         // Handle AI response
         flaskSocket.once("chat_response", async (Data) => {
           clearTimeout(timeout); // Cancel timeout if AI responds in time
           console.log("🤖 AI Response:", Data.answer);
-
-          const updatedUser = await User.findByIdAndUpdate(
-            messageSender,
-            {
-              $push: {
-                rAInChat: {
-                  role: "AI",
-                  text: Data.answer,
-                  timestamp: new Date(),
-                },
-              },
-            },
-            { new: true }
-          );
-          if (!global.activeUsers.has(messageSender)) {
-            console.error("❌ messageSender is NOT in global.activeUsers");
-            return;
-          }
-          const userSocket = global.activeUsers.get(messageSender);
-          if (!userSocket) {
-            console.error(
-              "❌ userSocket is undefined for user:",
-              messageSender
-            );
-            return;
-          }
-
-          io.to(userSocket).emit("receiveBotMessage", updatedUser);
+          sendMSGtoUser(messageSender, Data.answer);
         });
       }
     });
@@ -327,23 +274,12 @@ const initializeSocket = (server) => {
     flaskSocket.off("disconnect").on("disconnect", async () => {
       console.error("🚨 Flask server disconnected!");
 
-      for (const [messageSender, userSocket] of global.activeUsers.entries()) {
+      for (const [messageSender] of global.activeUsers.entries()) {
         try {
-          const updatedUser = await User.findByIdAndUpdate(
+          sendMSGtoUser(
             messageSender,
-            {
-              $push: {
-                rAInChat: {
-                  role: "AI",
-                  text: "Connection Error. Please try again later.",
-                  timestamp: new Date(),
-                },
-              },
-            },
-            { new: true }
+            "Connection Error. Please try again later."
           );
-
-          io.to(userSocket).emit("receiveBotMessage", updatedUser);
         } catch (error) {
           console.error(
             "❌ Error updating user chat on Flask disconnect:",
@@ -376,21 +312,10 @@ const initializeSocket = (server) => {
         if (global.activeUsers.has(userId)) {
           const userSocket = global.activeUsers.get(userId);
           io.to(userSocket).emit("matchmaking_started");
-          const updatedUser = await User.findByIdAndUpdate(
+          sendMSGtoUser(
             userId,
-            {
-              $push: {
-                rAInChat: {
-                  role: "AI",
-                  text: `Looking for a suitable person in ${data.selectedNetwork.name} Network...`,
-                  timestamp: new Date(),
-                },
-              },
-            },
-            { new: true }
+            `Looking for a suitable person in ${data.selectedNetwork.name} Network...`
           );
-
-          io.to(userSocket).emit("receiveBotMessage", updatedUser);
         }
 
         flaskSocket.emit("matchmaking_request", Data);
@@ -405,31 +330,14 @@ const initializeSocket = (server) => {
 
         flaskSocket.once("matchmaking_response", async (response) => {
           clearTimeout(timeout);
-          console.log(
-            "✅ Received matchmaking response:",
-            response,
-            response.matches
-          );
-
           if (global.activeUsers.has(userId)) {
             const userSocket = global.activeUsers.get(userId);
             io.to(userSocket).emit("matchmaking_complete", response);
-            const updatedUser = await User.findByIdAndUpdate(
-              userId,
-              {
-                $push: {
-                  rAInChat: {
-                    role: "AI",
-                    text: `Found ${response.matches.length} profiles suitable in ${data.selectedNetwork} network...`,
-                    timestamp: new Date(),
-                  },
-                },
-              },
-              { new: true }
-            );
-
-            io.to(userSocket).emit("receiveBotMessage", updatedUser);
           }
+          sendMSGtoUser(
+            userId,
+            `Found ${response.matches.length} profiles suitable in ${data.selectedNetwork} network`
+          );
         });
       } catch (error) {
         console.error("❌ Error in GenerateMatches:", error);
@@ -456,7 +364,26 @@ const initializeSocket = (server) => {
     });
   });
 
+  const sendMSGtoUser = async (userId, msgText) => {
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $push: {
+          rAInChat: {
+            role: "AI",
+            text: msgText,
+            timestamp: new Date(),
+          },
+        },
+      },
+      { new: true }
+    );
+    if (global.activeUsers.has(userId)) {
+      const userSocket = global.activeUsers.get(userId);
+
+      io.to(userSocket).emit("receiveBotMessage", updatedUser);
+    }
+  };
   return io;
 };
-
 module.exports = initializeSocket;

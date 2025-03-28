@@ -62,6 +62,7 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   const { email, password, latitude, longitude } = req.body;
+  console.log("login attempt");
 
   try {
     //check if user Exists

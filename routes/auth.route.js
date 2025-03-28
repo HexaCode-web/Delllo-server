@@ -5,7 +5,7 @@ const {
   registerUser,
   sendOTP,
   verifyOTP,
-} = require("../controllers/auth.controller.js");
+} = require("../controllers/Auth.controller.js");
 const router = express.Router();
 
 router.post(

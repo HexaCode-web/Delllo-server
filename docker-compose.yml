@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  delllo-server:
+    build: .
+    container_name: delllo-server
+    restart: always
+    ports:
+      - "5003:5003"
+    environment:
+      - PORT=5003
+      - MONGO_URI=mongodb://mongo:27017/delllo-db
+    depends_on:
+      - mongo
+    networks:
+      - delllo-network
+
+  mongo:
+    image: mongo:6.0
+    container_name: delllo-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - delllo-network
+
+volumes:
+  mongo-data:
+
+networks:
+  delllo-network:
+    external: true
